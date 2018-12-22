@@ -16,12 +16,19 @@ git clone https://github.com/iotaledger/ixi
 
 You can also manually download the repository source code if you don't have **Git**.
 
-### Step 2: Implement your IXI Module
+### Step 2: Open the Project in your IDE
+
+```shell
+# if you are using intellij (requires Gradle)
+gradle idea
+```
+
+### Step 3: Implement your IXI Module
 
 This part is where you get creative. Implement your ideas in `src/main/java/org.iota.ixi/Ixi.java`. Make sure to change
 the name from `example.ixi` to whatever your IXI module is called.
 
-### Step 3: Build your IXI.jar
+### Step 4: Build your IXI.jar
 
 This step requires **Gradle**.
 
