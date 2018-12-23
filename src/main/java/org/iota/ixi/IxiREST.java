@@ -30,14 +30,17 @@ public class IxiREST extends IxiModule {
     public static final String NAME = "chat.ixi";
     public static String USERNAME;
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws RSA.RSAException {
         new IxiREST(args[0]);
     }
 
-    public IxiREST(String username) {
+    public IxiREST(String username) throws RSA.RSAException {
         super(NAME);
         USERNAME = username;
         gossipFilter.watchAddress(ADDRESS);
+
+        KeyPair k = RSA.generateKeyPair();
+
     }
 
     @Override
@@ -51,7 +54,7 @@ public class IxiREST extends IxiModule {
         });
 
         get("/addChannel/:channel", (request, response) -> {
-            String address = channelNameToAddress(request.params(":channel"));
+            String address = request.params(":channel");
             gossipFilter.watchAddress(address);
             setGossipFilter(gossipFilter);
             return "";
