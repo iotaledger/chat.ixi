@@ -71,6 +71,10 @@ public class IxiREST extends IxiModule {
             response.header("Access-Control-Allow-Methods", "GET");
         });
 
+        get("/getMyPublicKey", (request, response) -> {
+            return Keys.publicKeyToString(publicKey);
+        });
+
         get("/addPublicKey/:pk", (request, response) -> {
             String pk = request.params(":pk");
             contacts.add(Keys.loadPublicKey(pk));
