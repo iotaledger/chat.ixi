@@ -1,11 +1,13 @@
 package org.iota.ixi;
 
+import org.iota.ict.Ict;
 import org.iota.ict.ixi.IxiModule;
 import org.iota.ict.model.Transaction;
 import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
+import org.iota.ict.utils.Properties;
 import org.json.JSONObject;
 import spark.Filter;
 import java.util.concurrent.BlockingQueue;
@@ -22,6 +24,10 @@ public class IxiREST extends IxiModule {
     public static final String ADDRESS = "IXI9CHAT9999999999999999999999999999999999999999999999999999999999999999999999999";
     public static final String NAME = "chat.ixi";
     public static String USERNAME;
+
+    public static void main(String[] args) throws InterruptedException {
+        new IxiREST(args[0]);
+    }
 
     public IxiREST(String username) {
         super(NAME);
