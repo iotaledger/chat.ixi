@@ -15,6 +15,8 @@ import spark.Filter;
 import java.io.File;
 import java.io.IOException;
 import java.security.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -28,6 +30,7 @@ public class IxiREST extends IxiModule {
     private static String username;
     private static PublicKey publicKey;
     private static PrivateKey privateKey;
+    private static Set<PublicKey> contacts = new HashSet<>();
 
     public static void main(String[] args) throws RSA.RSAException, IOException {
         new IxiREST(args[0]);
@@ -36,7 +39,6 @@ public class IxiREST extends IxiModule {
     public IxiREST(String username) throws RSA.RSAException, IOException {
         super("chat.ixi");
         username = this.username;
-
 
         File pk = new File("public.key");
         File sk = new File("private.key");
@@ -69,6 +71,12 @@ public class IxiREST extends IxiModule {
             response.header("Access-Control-Allow-Methods", "GET");
         });
 
+        get("/addPublicKey/:pk", (request, response) -> {
+            String pk = request.params(":pk");
+            contacts.add(Keys.loadPublicKey(pk));
+            return "";
+        });
+
         get("/addChannel/:channel", (request, response) -> {
             String address = request.params(":channel");
             gossipFilter.watchAddress(address);
@@ -79,6 +87,20 @@ public class IxiREST extends IxiModule {
         get("/getMessage/", (request, response) -> {
             Transaction t = messages.take();
             JSONObject o = new JSONObject(t.decodedSignatureFragments).put("timestamp", t.issuanceTimestamp);
+
+            String username = (String) o.get("username");
+            String message = (String) o.get("message");
+            String channel = (String) o.get("channel");
+            PublicKey pk = Keys.loadPublicKey((String) o.get("publicKey"));
+            String signature = (String) o.get("signature");
+
+            boolean trusted = false;
+            if(contacts.contains(pk))
+                if(RSA.verify(username+message+channel,signature,pk))
+                    trusted = true;
+
+            o.put("isValidSignature", trusted);
+
             return o.toString();
         });
 
@@ -94,7 +116,7 @@ public class IxiREST extends IxiModule {
             o.accumulate("username", username);
             o.accumulate("message",message);
             o.accumulate("channel",channel);
-            o.accumulate("publicKey",hash(Keys.publicKeyToString(publicKey)));
+            o.accumulate("publicKey",Keys.publicKeyToString(publicKey));
             o.accumulate("signature",RSA.sign(username+message+channel,privateKey));
 
             b.asciiMessage(o.toString());
