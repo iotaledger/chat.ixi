@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.zip.Adler32;
 
 import static spark.Spark.get;
 
@@ -30,6 +31,7 @@ public class IxiREST extends IxiModule {
     public IxiREST(String username) {
         super(NAME);
         USERNAME = username;
+        gossipFilter.watchAddress(ADDRESS);
     }
 
     @Override
