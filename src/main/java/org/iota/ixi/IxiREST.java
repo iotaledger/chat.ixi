@@ -19,7 +19,7 @@ import static spark.Spark.get;
 public class IxiREST extends IxiModule {
 
     private Set<String> channels = new HashSet<>();
-    private BlockingQueue<Transaction> toPrint = new LinkedBlockingQueue<>();
+    private BlockingQueue<Transaction> messages = new LinkedBlockingQueue<>();
 
     public static final String ADDRESS = "IXI9CHAT9999999999999999999999999999999999999999999999999999999999999999999999999";
     public static final String NAME = "chat.ixi";
@@ -30,6 +30,7 @@ public class IxiREST extends IxiModule {
 
     @Override
     public void onIctConnect(String name) {
+
         setGossipFilter(new GossipFilter().watchAddress(ADDRESS));
         System.out.println("Connected!");
 
@@ -39,7 +40,7 @@ public class IxiREST extends IxiModule {
         });
 
         get("/getMessage/", (request, response) -> {
-            Transaction t = toPrint.take();
+            Transaction t = messages.take();
             return "[" + t.hash + "] " + t.decodedSignatureFragments;
         });
 
@@ -61,7 +62,7 @@ public class IxiREST extends IxiModule {
 
     @Override
     public void onTransactionReceived(GossipReceiveEvent event) {
-        toPrint.add(event.getTransaction());
+        messages.add(event.getTransaction());
         System.out.println("RECEIVED");
     }
 
