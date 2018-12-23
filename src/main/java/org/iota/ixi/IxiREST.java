@@ -99,7 +99,7 @@ public class IxiREST extends IxiModule {
                 if(RSA.verify(username+message+channel,signature,pk))
                     trusted = true;
 
-            o.put("isValidSignature", trusted);
+            o.put("trusted", trusted);
 
             return o.toString();
         });
