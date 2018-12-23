@@ -1,5 +1,6 @@
 package org.iota.ixi;
 
+import com.iota.curl.IotaCurlHash;
 import org.iota.ict.Ict;
 import org.iota.ict.ixi.IxiModule;
 import org.iota.ict.model.Transaction;
@@ -7,6 +8,7 @@ import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
+import org.iota.ict.utils.Constants;
 import org.iota.ict.utils.Properties;
 import org.json.JSONObject;
 import spark.Filter;
@@ -46,7 +48,8 @@ public class IxiREST extends IxiModule {
         });
 
         get("/addChannel/:channel", (request, response) -> {
-            gossipFilter.getWatchedAddresses().add(request.params(":channel"));
+            String address = channelNameToAddress(request.params(":channel"));
+            gossipFilter.getWatchedAddresses().add(address);
             setGossipFilter(gossipFilter);
             return "";
         });
@@ -72,7 +75,7 @@ public class IxiREST extends IxiModule {
 
             b.asciiMessage(o.toString());
 
-            submit(b.build()); 
+            submit(b.build());
 
             return "";
 
@@ -92,6 +95,11 @@ public class IxiREST extends IxiModule {
     public void onTransactionSubmitted(GossipSubmitEvent event) {
         messages.add(event.getTransaction());
         System.out.println("SUBMITTED");
+    }
+
+    private String channelNameToAddress(String name) {
+        name = name.toUpperCase();
+        return IotaCurlHash.iotaCurlHash(name, name.length(), Constants.CURL_ROUNDS_BUNDLE_HASH);
     }
 
 }
