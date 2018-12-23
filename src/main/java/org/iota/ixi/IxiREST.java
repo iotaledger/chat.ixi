@@ -57,11 +57,11 @@ public class IxiREST extends IxiModule {
             b.address = channel;
 
             JSONObject o = new JSONObject();
-
             o.accumulate("username", USERNAME);
             o.accumulate("message",message);
             o.accumulate("timestamp", LocalDateTime.now());
-            b.asciiMessage(message);
+
+            b.asciiMessage(o.toString());
 
             submit(b.build());
 
