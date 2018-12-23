@@ -13,6 +13,8 @@ import org.iota.ict.utils.Properties;
 import org.iota.ict.utils.Trytes;
 import org.json.JSONObject;
 import spark.Filter;
+
+import java.security.KeyPair;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -50,7 +52,7 @@ public class IxiREST extends IxiModule {
 
         get("/addChannel/:channel", (request, response) -> {
             String address = channelNameToAddress(request.params(":channel"));
-            gossipFilter.getWatchedAddresses().add(address);
+            gossipFilter.watchAddress(address);
             setGossipFilter(gossipFilter);
             return "";
         });
