@@ -72,7 +72,7 @@ public class IxiREST extends IxiModule {
 
             b.asciiMessage(o.toString());
 
-            submit(b.build());
+            submit(b.build()); 
 
             return "";
 
