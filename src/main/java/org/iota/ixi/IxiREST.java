@@ -62,6 +62,7 @@ public class IxiREST extends IxiModule {
             JSONObject o = new JSONObject();
             o.accumulate("username", USERNAME);
             o.accumulate("message",message);
+            o.accumulate("channel",channel);
 
             b.asciiMessage(o.toString());
 
