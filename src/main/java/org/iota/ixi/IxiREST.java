@@ -10,6 +10,7 @@ import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
 import org.iota.ict.utils.Constants;
 import org.iota.ict.utils.Properties;
+import org.iota.ict.utils.Trytes;
 import org.json.JSONObject;
 import spark.Filter;
 import java.util.concurrent.BlockingQueue;
@@ -98,8 +99,8 @@ public class IxiREST extends IxiModule {
     }
 
     private String channelNameToAddress(String name) {
-        name = name.toUpperCase();
-        return IotaCurlHash.iotaCurlHash(name, name.length(), Constants.CURL_ROUNDS_BUNDLE_HASH);
+        String trytes = Trytes.fromAscii(name);
+        return IotaCurlHash.iotaCurlHash(trytes, trytes.length(), Constants.CURL_ROUNDS_BUNDLE_HASH);
     }
 
 }
