@@ -12,7 +12,7 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException {
 
-        new IxiREST();
+        new IxiREST("Your_Name");
 
         Properties p1 = new Properties();
         p1.port = 1341;

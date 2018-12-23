@@ -82,9 +82,4 @@ public class IxiREST extends IxiModule {
     @Override
     public void onTransactionSubmitted(GossipSubmitEvent event) { ; }
 
-
-    public static void main(String[] args) {
-        new IxiREST();
-    }
-
 }
