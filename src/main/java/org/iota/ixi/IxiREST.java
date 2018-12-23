@@ -33,7 +33,7 @@ public class IxiREST extends IxiModule {
     public void onIctConnect(String name) {
 
         setGossipFilter(gossipFilter);
-        
+
         after((Filter) (request, response) -> {
             response.header("Access-Control-Allow-Origin", "*");
             response.header("Access-Control-Allow-Methods", "GET");
@@ -51,10 +51,10 @@ public class IxiREST extends IxiModule {
             return o.toString();
         });
 
-        get("/submitMessage/:channel/:message", (request, response) -> {
+        get("/submitMessage/:channel/", (request, response) -> {
 
-            String message = request.params(":message");
             String channel = request.params(":channel");
+            String message = request.queryParams("message");
 
             TransactionBuilder b = new TransactionBuilder();
             b.address = channel;
