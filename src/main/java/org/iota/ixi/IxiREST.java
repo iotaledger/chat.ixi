@@ -1,7 +1,6 @@
 package org.iota.ixi;
 
 import com.iota.curl.IotaCurlHash;
-import org.iota.ict.Ict;
 import org.iota.ict.ixi.IxiModule;
 import org.iota.ict.model.Transaction;
 import org.iota.ict.model.TransactionBuilder;
@@ -9,12 +8,13 @@ import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
 import org.iota.ict.utils.Constants;
-import org.iota.ict.utils.Properties;
 import org.iota.ict.utils.Trytes;
 import org.json.JSONObject;
 import spark.Filter;
 
-import java.security.KeyPair;
+import java.io.File;
+import java.io.IOException;
+import java.security.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -25,21 +25,37 @@ public class IxiREST extends IxiModule {
 
     private GossipFilter gossipFilter = new GossipFilter();
     private BlockingQueue<Transaction> messages = new LinkedBlockingQueue<>();
+    private static String username;
+    private static PublicKey publicKey;
+    private static PrivateKey privateKey;
 
-    public static final String ADDRESS = "IXI9CHAT9999999999999999999999999999999999999999999999999999999999999999999999999";
-    public static final String NAME = "chat.ixi";
-    public static String USERNAME;
-
-    public static void main(String[] args) throws RSA.RSAException {
+    public static void main(String[] args) throws RSA.RSAException, IOException {
         new IxiREST(args[0]);
     }
 
-    public IxiREST(String username) throws RSA.RSAException {
-        super(NAME);
-        USERNAME = username;
-        gossipFilter.watchAddress(ADDRESS);
+    public IxiREST(String username) throws RSA.RSAException, IOException {
+        super("chat.ixi");
+        username = this.username;
 
-        KeyPair k = RSA.generateKeyPair();
+
+        File pk = new File("public.key");
+        File sk = new File("private.key");
+
+        if(!pk.exists() || !sk.exists()) {
+            pk.delete();
+            sk.delete();
+
+            KeyPair k = RSA.generateKeyPair();
+
+            String publicKeyString = Keys.publicKeyToString(k.getPublic());
+            String privateKeyString = Keys.privateKeyToString(k.getPrivate());
+
+            Keys.writeToFile(publicKeyString, "public.key");
+            Keys.writeToFile(privateKeyString, "private.key");
+        }
+
+        publicKey = Keys.readPublicKeyFromFile();
+        privateKey = Keys.readPrivateKeyFromFile();
 
     }
 
@@ -75,9 +91,11 @@ public class IxiREST extends IxiModule {
             b.address = channel;
 
             JSONObject o = new JSONObject();
-            o.accumulate("username", USERNAME);
+            o.accumulate("username", username);
             o.accumulate("message",message);
             o.accumulate("channel",channel);
+            o.accumulate("publicKey",hash(Keys.publicKeyToString(publicKey)));
+            o.accumulate("signature",RSA.sign(username+message+channel,privateKey));
 
             b.asciiMessage(o.toString());
 
@@ -103,8 +121,8 @@ public class IxiREST extends IxiModule {
         System.out.println("SUBMITTED");
     }
 
-    private String channelNameToAddress(String name) {
-        String trytes = Trytes.fromAscii(name);
+    private String hash(String s) {
+        String trytes = Trytes.fromAscii(s);
         return IotaCurlHash.iotaCurlHash(trytes, trytes.length(), Constants.CURL_ROUNDS_BUNDLE_HASH);
     }
 
