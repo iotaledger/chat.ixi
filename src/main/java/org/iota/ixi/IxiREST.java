@@ -2,6 +2,7 @@ package org.iota.ixi;
 
 import org.iota.ict.ixi.IxiModule;
 import org.iota.ict.model.Transaction;
+import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
@@ -10,7 +11,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static spark.Spark.get;
-
 
 public class IxiREST extends IxiModule implements Runnable {
 
@@ -43,8 +43,21 @@ public class IxiREST extends IxiModule implements Runnable {
     public void run() {
 
         get("/getMessage/", (request, response) -> {
-           Transaction t = toPrint.take();
-           return "[" + t.hash + "] " + t.decodedSignatureFragments;
+            Transaction t = toPrint.take();
+            return "[" + t.hash + "] " + t.decodedSignatureFragments;
+        });
+
+        get("/submitMessage/:message", (request, response) -> {
+
+            String message = request.params(":message");
+
+            TransactionBuilder b = new TransactionBuilder();
+            b.address = ADDRESS;
+            b.asciiMessage(message);
+            submit(b.build());
+
+            return "";
+
         });
 
     }
