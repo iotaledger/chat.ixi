@@ -6,7 +6,9 @@ import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
+import org.json.JSONObject;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -18,30 +20,32 @@ import static spark.Spark.get;
 
 public class IxiREST extends IxiModule {
 
-    private Set<String> channels = new HashSet<>();
+    private GossipFilter gossipFilter = new GossipFilter();
     private BlockingQueue<Transaction> messages = new LinkedBlockingQueue<>();
 
     public static final String ADDRESS = "IXI9CHAT9999999999999999999999999999999999999999999999999999999999999999999999999";
     public static final String NAME = "chat.ixi";
+    public static String USERNAME;
 
-    public IxiREST() {
+    public IxiREST(String username) {
         super(NAME);
+        USERNAME = username;
     }
 
     @Override
     public void onIctConnect(String name) {
 
-        setGossipFilter(new GossipFilter().watchAddress(ADDRESS));
-        System.out.println("Connected!");
+        setGossipFilter(gossipFilter);
 
         get("/addChannel/:channel", (request, response) -> {
-            channels.add(request.params(":channel"));
+            gossipFilter.getWatchedAddresses().add(request.params(":channel"));
             return "";
         });
 
         get("/getMessage/", (request, response) -> {
             Transaction t = messages.take();
-            return "[" + t.hash + "] " + t.decodedSignatureFragments;
+            JSONObject o = new JSONObject(t.decodedSignatureFragments);
+            return o.toString();
         });
 
         get("/submitMessage/:channel/:message", (request, response) -> {
@@ -51,12 +55,21 @@ public class IxiREST extends IxiModule {
 
             TransactionBuilder b = new TransactionBuilder();
             b.address = channel;
+
+            JSONObject o = new JSONObject();
+
+            o.accumulate("username", USERNAME);
+            o.accumulate("message",message);
+            o.accumulate("timestamp", LocalDateTime.now());
             b.asciiMessage(message);
+
             submit(b.build());
 
             return "";
 
         });
+
+        System.out.println("Connected!");
 
     }
 
