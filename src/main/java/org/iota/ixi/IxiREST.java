@@ -8,18 +8,8 @@ import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
 import org.json.JSONObject;
 import spark.Filter;
-import spark.Request;
-import spark.Response;
-import spark.Spark;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.zip.Adler32;
 
 import static spark.Spark.after;
 import static spark.Spark.get;
@@ -51,12 +41,13 @@ public class IxiREST extends IxiModule {
 
         get("/addChannel/:channel", (request, response) -> {
             gossipFilter.getWatchedAddresses().add(request.params(":channel"));
+            setGossipFilter(gossipFilter);
             return "";
         });
 
         get("/getMessage/", (request, response) -> {
             Transaction t = messages.take();
-            JSONObject o = new JSONObject(t.decodedSignatureFragments);
+            JSONObject o = new JSONObject(t.decodedSignatureFragments).put("timestamp", t.issuanceTimestamp);
             return o.toString();
         });
 
@@ -71,7 +62,6 @@ public class IxiREST extends IxiModule {
             JSONObject o = new JSONObject();
             o.accumulate("username", USERNAME);
             o.accumulate("message",message);
-            o.accumulate("timestamp", LocalDateTime.now());
 
             b.asciiMessage(o.toString());
 
@@ -92,6 +82,9 @@ public class IxiREST extends IxiModule {
     }
 
     @Override
-    public void onTransactionSubmitted(GossipSubmitEvent event) { ; }
+    public void onTransactionSubmitted(GossipSubmitEvent event) {
+        messages.add(event.getTransaction());
+        System.out.println("SUBMITTED");
+    }
 
 }
