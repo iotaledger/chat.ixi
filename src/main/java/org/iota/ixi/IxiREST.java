@@ -21,6 +21,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.Adler32;
 
+import static spark.Spark.after;
 import static spark.Spark.get;
 
 public class IxiREST extends IxiModule {
@@ -42,7 +43,11 @@ public class IxiREST extends IxiModule {
     public void onIctConnect(String name) {
 
         setGossipFilter(gossipFilter);
-        CorsFilter.apply();
+        
+        after((Filter) (request, response) -> {
+            response.header("Access-Control-Allow-Origin", "*");
+            response.header("Access-Control-Allow-Methods", "GET");
+        });
 
         get("/addChannel/:channel", (request, response) -> {
             gossipFilter.getWatchedAddresses().add(request.params(":channel"));
@@ -88,29 +93,5 @@ public class IxiREST extends IxiModule {
 
     @Override
     public void onTransactionSubmitted(GossipSubmitEvent event) { ; }
-
-    public static class CorsFilter {
-
-        private final static HashMap<String, String> corsHeaders = new HashMap<>();
-
-        public CorsFilter() {
-            corsHeaders.put("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
-            corsHeaders.put("Access-Control-Allow-Origin", "*");
-            corsHeaders.put("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,");
-            corsHeaders.put("Access-Control-Allow-Credentials", "true");
-        }
-
-        public static void apply() {
-            Filter filter = new Filter() {
-                @Override
-                public void handle(Request request, Response response) throws Exception {
-                    corsHeaders.forEach((key, value) -> {
-                        response.header(key, value);
-                    });
-                }
-            };
-            Spark.after(filter);
-        }
-    }
 
 }
