@@ -20,11 +20,11 @@ public class Message {
     public Message(Transaction transaction, Set<String> contacts) {
         final JSONObject jsonObject = new JSONObject(transaction.decodedSignatureFragments);
         timestamp = transaction.issuanceTimestamp;
-        username = jsonObject.getString("username");
-        message = jsonObject.getString("message");
-        channel = jsonObject.getString("channel");
-        publicKey = jsonObject.getString("publicKey");
-        signature = jsonObject.getString("signature");
+        username = jsonObject.getString(Fields.username.name());
+        message = jsonObject.getString(Fields.message.name());
+        channel = jsonObject.getString(Fields.channel.name());
+        publicKey = jsonObject.getString(Fields.public_key.name());
+        signature = jsonObject.getString(Fields.signature.name());
         isTrusted = isTrusted(contacts);
     }
 

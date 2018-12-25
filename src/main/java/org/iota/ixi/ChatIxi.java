@@ -1,6 +1,7 @@
 package org.iota.ixi;
 
 import org.iota.ict.ixi.IxiModule;
+import org.iota.ict.model.Transaction;
 import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipReceiveEvent;
@@ -20,11 +21,11 @@ import static spark.Spark.get;
 
 public class ChatIxi extends IxiModule {
 
-    private GossipFilter gossipFilter = new GossipFilter();
-    private BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
+    private final BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
     private String username;
     private final org.iota.ixi.utils.KeyPair keyPair;
     private Set<String> contacts = new HashSet<>();
+    private Set<String> channels = new HashSet<>();
 
     public static void main(String[] args) {
         new ChatIxi(args.length > 0 ? args[0] : "anonymous");
@@ -34,12 +35,11 @@ public class ChatIxi extends IxiModule {
         super("chat.ixi");
         this.username = username;
         this.keyPair = KeyManager.loadKeyPair();
+        System.out.println("Waiting for Ict to connect ...");
     }
 
     @Override
     public void onIctConnect(String name) {
-
-        setGossipFilter(gossipFilter);
 
         after((Filter) (request, response) -> {
             response.header("Access-Control-Allow-Origin", "*");
@@ -54,13 +54,26 @@ public class ChatIxi extends IxiModule {
         });
 
         get("/addChannel/:channel", (request, response) -> {
-            String address = request.params(":channel");
-            gossipFilter.watchAddress(address);
-            setGossipFilter(gossipFilter);
+            // addChannel/ is called N times in a very short interval (one time for each channel). Therefore the gossip filter will be changed N times.
+            // Due to the delay of setGossipFilter(), it is important to ensure that setGossipFilter() is called in the correct order.
+            // Otherwise the newest GossipFilter with N channels might be replaced by an older GossipFilter with L channels (L<N).
+            // This would result in missing channels. The synchronized block ensures the correct order.
+
+            synchronized (this) { // synchronized necessary for correct order of setGossipFilter()
+                String channel = request.params(":channel");
+                channels.add(channel);
+                GossipFilter gossipFilter = new GossipFilter();
+                for (String c : channels)
+                    gossipFilter.watchAddress(c);
+                setGossipFilter(gossipFilter);
+            }
             return "";
         });
 
-        get("/getMessage/", (request, response) ->  messages.take().toString());
+        get("/getMessage/", (request, response) -> {
+            Message message = messages.take();
+            return message.toString();
+        });
 
         get("/submitMessage/:channel/", (request, response) -> {
             String channel = request.params(":channel");
@@ -88,10 +101,11 @@ public class ChatIxi extends IxiModule {
     }
 
     private void submitMessage(String channel, Message message) {
-        TransactionBuilder b = new TransactionBuilder();
-        b.address = channel;
-        b.asciiMessage(message.toString());
-        submit(b.build());
+        TransactionBuilder builder = new TransactionBuilder();
+        builder.address = channel;
+        builder.asciiMessage(message.toString());
+        Transaction transaction = builder.build();
+        submit(transaction);
     }
 
     @Override
