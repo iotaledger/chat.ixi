@@ -3,6 +3,7 @@ package org.iota.ixi.model;
 import org.iota.ict.model.Transaction;
 import org.iota.ixi.RSA;
 import org.iota.ixi.utils.KeyPair;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Set;
@@ -17,7 +18,7 @@ public class Message {
     public final String publicKey;
     public final boolean isTrusted;
 
-    public Message(Transaction transaction, Set<String> contacts) {
+    public Message(Transaction transaction, Set<String> contacts) throws JSONException {
         final JSONObject jsonObject = new JSONObject(transaction.decodedSignatureFragments);
         timestamp = transaction.issuanceTimestamp;
         username = jsonObject.getString(Fields.username.name());

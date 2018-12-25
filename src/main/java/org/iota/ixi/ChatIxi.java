@@ -9,6 +9,7 @@ import org.iota.ict.network.event.GossipSubmitEvent;
 import org.iota.ixi.model.Message;
 import org.iota.ixi.model.MessageBuilder;
 import org.iota.ixi.utils.KeyManager;
+import org.json.JSONException;
 import spark.Filter;
 
 import java.util.HashSet;
@@ -110,11 +111,16 @@ public class ChatIxi extends IxiModule {
 
     @Override
     public void onTransactionReceived(GossipReceiveEvent event) {
-        messages.add(new Message(event.getTransaction(), contacts));
+        try {
+            Message m = new Message(event.getTransaction(), contacts);
+            messages.add(m);
+        } catch (JSONException e) { ; }
     }
 
     @Override
     public void onTransactionSubmitted(GossipSubmitEvent event) {
-        messages.add(new Message(event.getTransaction(), contacts));
+        Message m = new Message(event.getTransaction(), contacts);
+        messages.add(m);
     }
+
 }
