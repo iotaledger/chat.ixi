@@ -97,7 +97,7 @@ function submit_message(channel, message) {
     $.ajax({
         url: REST_URL_SUBMIT+channel+"/",
         data: [{"name": "message", "value": encode(message)}],
-        success: function (data) { console.log("submitted"); $input_loading.addClass("hidden"); },
+        success: function (data) { console.log("submitted"); $input_loading.addClass("hidden"); document.getElementById('message').value = "";  },
         error: function (err) { console.log(err); $input_loading.addClass("hidden"); },
     });
 }
