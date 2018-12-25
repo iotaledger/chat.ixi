@@ -75,11 +75,14 @@ function show_message(tx) {
     const date = new Date(timestamp);
     const time = ("0"+date.getHours()).slice(-2) + ":" + ("0"+date.getMinutes()).slice(-2) + ":" + ("0"+date.getSeconds()).slice(-2);
 
+    const icon = '<img width=48 height=48 src="data:image/png;base64,' + new Identicon(user_id.padEnd(15, "0"), 48).toString() + '">';
+
     const $msg_head = $('<div>').addClass("msg_head")
         .append($('<label>').addClass("username").text(username + "@" + user_id.substr(0, 8)))
         .append(" at " + time);
     const $msg_body = $('<div>').addClass("msg_body").text(decode(message));
     const $msg = $('<div>').addClass("msg").addClass("hidden").addClass(is_own ? "own" : is_trusted ? "trusted" : "untrusted")
+        .append(icon)
         .append($msg_head)
         .append($msg_body);
     $('#msgs').append($msg);

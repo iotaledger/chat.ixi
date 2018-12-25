@@ -145,6 +145,7 @@ body {
     box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
     transition: 0.5s opacity;
     margin-left: 20px;
+    min-height: 74px;
 }
 
 #chat #log .msg.own {
@@ -160,6 +161,11 @@ body {
 
 #chat #log .msg.hidden {
     opacity: 0;
+}
+
+#chat #log .msg img {
+    float: left;
+    margin: 0px 15px 5px 0px;
 }
 
 #chat #log .msg .msg_head {
