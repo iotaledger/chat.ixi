@@ -77,7 +77,7 @@ public class ChatIxi extends IxiModule {
 
         get("/addPublicKey/:pk", (request, response) -> {
             String pk = request.params(":pk");
-            contacts.add(Keys.loadPublicKey(pk));
+            contacts.add(Keys.publicKeyFromString(pk));
             return "";
         });
 
@@ -95,7 +95,7 @@ public class ChatIxi extends IxiModule {
             String username = (String) o.get("username");
             String message = (String) o.get("message");
             String channel = (String) o.get("channel");
-            PublicKey pk = Keys.loadPublicKey((String) o.get("publicKey"));
+            PublicKey pk = Keys.publicKeyFromString((String) o.get("publicKey"));
             String signature = (String) o.get("signature");
 
             boolean trusted = false;
@@ -121,7 +121,7 @@ public class ChatIxi extends IxiModule {
             o.accumulate("message",message);
             o.accumulate("channel",channel);
             o.accumulate("publicKey",Keys.publicKeyToString(publicKey));
-            o.accumulate("signature",RSA.sign(username+message+channel,privateKey));
+            o.accumulate("signature",RSA.sign(username+message+channel, privateKey));
 
             b.asciiMessage(o.toString());
 
