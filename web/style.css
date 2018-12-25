@@ -50,7 +50,7 @@ body {
     border-radius: 3px;
     border: none;
     padding: 10px 35px;
-    margin: 40px 5px 5px 5px;
+    margin: 40px 5px -30px 5px;
     cursor: pointer;
     background-color: rgba(255, 255, 255, 0.3);
 }

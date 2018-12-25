@@ -23,21 +23,24 @@ var current_channel;
 
 function change_channel(new_channel_name) {
 
-    const channel = CHANNEL_CODES[new_channel_name];
-    if(channels[channel] === undefined)
-        channels[channel] = [];
-    current_channel = channel;
+    current_channel = CHANNEL_CODES[new_channel_name];
+    if(current_channel === undefined)
+        channels[current_channel] = [];
 
     $('#channel_header').text("#"+new_channel_name);
-    $('#msgs').html("");
 
-    let hue = HUES[channel[0]];
+    let hue = HUES[current_channel[0]];
     $('body').css("background-color", " hsl(" + hue + ", 70%, 30%)");
 
-    channels[channel].forEach(function (tx) {
+    show_all_messages();
+    update_new_msg_counter(current_channel);
+}
+
+function show_all_messages() {
+    $('#msgs').html("");
+    channels[current_channel].forEach(function (tx) {
         show_message(tx);
     });
-    update_new_msg_counter(channel);
 }
 
 function update_new_msg_counter(channel) {
@@ -60,6 +63,7 @@ function show_message(tx) {
     const message = tx['message'];
     const timestamp = tx['timestamp'];
     const username = tx['username'];
+    const user_id = tx['user_id'];
     const is_trusted = tx['is_trusted'];
 
     if(channel !== current_channel) { return; }
@@ -68,7 +72,7 @@ function show_message(tx) {
     const time = ("0"+date.getHours()).slice(-2) + ":" + ("0"+date.getMinutes()).slice(-2) + ":" + ("0"+date.getSeconds()).slice(-2);
 
     const $msg_head = $('<div>').addClass("msg_head")
-        .append($('<label>').addClass("username").text(username))
+        .append($('<label>').addClass("username").text(username + "@" + user_id.substr(0, 8)))
         .append(" at " + time);
     const $msg_body = $('<div>').addClass("msg_body").text(decode(message));
     const $msg = $('<div>').addClass("msg").addClass("hidden").addClass(is_trusted ? "trusted" : "untrusted")
@@ -168,6 +172,15 @@ function addContact() {
     $.ajax({
         url: REST_URL_ADD_CONTACT,
         data: [{"name": "public_key", "value": public_key}],
+        success: function(data) {
+            for(var channel in channels) {
+                channels[channel].forEach(function (msg) {
+                    if(msg['public_key'] === public_key)
+                        msg['is_trusted'] = true;
+                })
+            };
+            show_all_messages();
+        },
         error: function (err) { console.log(err); },
     });
 }

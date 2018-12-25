@@ -9,7 +9,6 @@ import org.iota.ict.network.event.GossipSubmitEvent;
 import org.iota.ixi.model.Message;
 import org.iota.ixi.model.MessageBuilder;
 import org.iota.ixi.utils.KeyManager;
-import org.json.JSONException;
 import spark.Filter;
 
 import java.util.*;
@@ -142,7 +141,9 @@ public class ChatIxi extends IxiModule {
             Message message = new Message(transaction, contacts);
             if(message.message.length() > 0)
                 messages.add(message);
-        } catch (JSONException e) { ; }
+        } catch (Throwable t) {
+            System.err.println(t.getMessage());
+        }
     }
 
 }
