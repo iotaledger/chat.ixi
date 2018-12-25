@@ -67,6 +67,9 @@ public class ChatIxi extends IxiModule {
                 for (String c : channels)
                     gossipFilter.watchAddress(c);
                 setGossipFilter(gossipFilter);
+
+                for(Transaction transaction : findTransactionsByAddress(channel))
+                    messages.add(new Message(transaction, contacts));
             }
             return "";
         });
