@@ -1,4 +1,4 @@
-const REST_URL = "http://localhost:4567/";
+const REST_URL = "http://173.249.10.97:4567/";
 const REST_URL_GET = REST_URL+"getMessage/";
 const REST_URL_SUBMIT = REST_URL+"submitMessage/";
 const REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
@@ -15,37 +15,46 @@ const HUES = {
 };
 
 var channels = {};
+var last_read_of_channel = {};
 var current_channel;
 
 function change_channel(new_channel_name) {
 
-    let code = CHANNEL_CODES[new_channel_name];
-    if(channels[code] === undefined)
-        channels[code] = [];
-    current_channel = code;
+    const channel = CHANNEL_CODES[new_channel_name];
+    if(channels[channel] === undefined)
+        channels[channel] = [];
+    current_channel = channel;
 
     $('#channel_header').text("#"+new_channel_name);
     $('#msgs').html("");
 
-    let hue = HUES[code[0]];
-    $('body').css("background-color", " hsl(" + hue + ", 50%, 15%)");
+    let hue = HUES[channel[0]];
+    $('body').css("background-color", " hsl(" + hue + ", 70%, 30%)");
 
-    channels[code].forEach(function (tx) {
+    channels[channel].forEach(function (tx) {
         show_message(tx);
     });
+    update_new_msg_counter(channel);
+}
+
+function update_new_msg_counter(channel) {
+    const unread_msgs = channels[channel].length - last_read_of_channel[channel];
+    $('#channel_' + channel + " .new_msg_counter").text(unread_msgs == 0 ? "" : unread_msgs);
 }
 
 function new_message(tx) {
-    channels[tx['channel']].push(tx);
+    const channel = tx['channel'];
+    channels[channel].push(tx);
     show_message(tx);
+    update_new_msg_counter(channel);
 }
 
 function show_message(tx) {
 
-    let channel = tx['channel'];
-    let message = tx['message'];
-    let timestamp = tx['timestamp'];
-    let user = tx['user'];
+    const channel = tx['channel'];
+    const message = tx['message'];
+    const timestamp = tx['timestamp'];
+    const username = tx['username'];
 
     if(channel !== current_channel) { return; }
 
@@ -53,13 +62,18 @@ function show_message(tx) {
     const time = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
 
     const $msg_head = $('<div>').addClass("msg_head")
-        .append($('<label>').addClass("username").text(user))
+        .append($('<label>').addClass("username").text(username))
         .append(" at " + time);
     const $msg_body = $('<div>').addClass("msg_body").text(decode(message));
-    const $msg = $('<div>').addClass("msg")
+    const $msg = $('<div>').addClass("msg").addClass("hidden")
         .append($msg_head)
         .append($msg_body);
     $('#msgs').append($msg);
+    setTimeout(function (e) {
+        $msg.removeClass("hidden");
+    }, 0);
+
+    last_read_of_channel[current_channel] = channels[current_channel].length;
 }
 
 function read_message() {
@@ -86,11 +100,16 @@ function submit_message(channel, message) {
 
 function add_channel(channel_name) {
 
-    CHANNEL_CODES[channel_name] = channel_name.toUpperCase().padEnd(81, "9");
+    const code = channel_name.toUpperCase().padEnd(81, "9");
+    CHANNEL_CODES[channel_name] = code;
+    channels[code] = [];
+    last_read_of_channel[code] = 0;
 
-    $('#channels').append($('<div>').addClass('channel').text("#"+channel_name).click(function () {
-            change_channel(channel_name);
-    }));
+    const $channel =
+        $('<div>').addClass('channel').attr("id", "channel_"+CHANNEL_CODES[channel_name]).text("#"+channel_name)
+            .append($('<label>').addClass('new_msg_counter').text(""))
+            .click(function () { change_channel(channel_name); });
+    $('#channels').append($channel);
 
     $.ajax({
         url: REST_URL_ADD_CHANNEL+CHANNEL_CODES[channel_name],

@@ -53,6 +53,24 @@ body {
     color: rgba(255, 255, 255, 0.6);
 }
 
+#channels .channel .new_msg_counter {
+    margin-left: 5px;
+    color: #FFF;
+    cursor: pointer;
+}
+
+
+#channels .channel .new_msg_counter:empty {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+#channels .channel .new_msg_counter:empty:before {
+    content: '(0';
+}
+
+#channels .channel .new_msg_counter:before { content: '('; }
+#channels .channel .new_msg_counter:after { content: ')'; }
+
 #channels .channel:hover {
     border-left: 5px solid #E7DFDD;
     color: #FFF;
@@ -87,6 +105,11 @@ body {
     color: #E7DFDD;
     border-radius: 3px;
     box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+    transition: 0.5s opacity;
+}
+
+#chat #log .msg.hidden {
+    opacity: 0;
 }
 
 #chat #log .msg .msg_head {
