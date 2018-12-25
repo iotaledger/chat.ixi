@@ -15,7 +15,7 @@ public class Main {
 
         System.out.println( IotaCurlHash.iotaCurlHash("JUTZZ9TBIDYGV9OJPDPJAQUXMKO9T9XJH9FSVDMPYVZQOQISKDPINKGZMJIXDUAVDVLGIQFNHG9MDWUXD", "JUTZZ9TBIDYGV9OJPDPJAQUXMKO9T9XJH9FSVDMPYVZQOQISKDPINKGZMJIXDUAVDVLGIQFNHG9MDWUXD".length(), Constants.CURL_ROUNDS_BUNDLE_HASH));
 
-//        new IxiREST("Your_Name");
+//        new ChatIxi("Your_Name");
 //
 //        Properties p1 = new Properties();
 //        p1.port = 1341;

@@ -23,22 +23,22 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static spark.Spark.after;
 import static spark.Spark.get;
 
-public class IxiREST extends IxiModule {
+public class ChatIxi extends IxiModule {
 
     private GossipFilter gossipFilter = new GossipFilter();
     private BlockingQueue<Transaction> messages = new LinkedBlockingQueue<>();
-    private static String username;
-    private static PublicKey publicKey;
-    private static PrivateKey privateKey;
-    private static Set<PublicKey> contacts = new HashSet<>();
+    private String username;
+    private PublicKey publicKey;
+    private PrivateKey privateKey;
+    private Set<PublicKey> contacts = new HashSet<>();
 
     public static void main(String[] args) throws RSA.RSAException, IOException {
-        new IxiREST(args[0]);
+        new ChatIxi(args[0]);
     }
 
-    public IxiREST(String username) throws RSA.RSAException, IOException {
+    public ChatIxi(String username) throws RSA.RSAException, IOException {
         super("chat.ixi");
-        username = this.username;
+        this.username = username;
 
         File pk = new File("public.key");
         File sk = new File("private.key");

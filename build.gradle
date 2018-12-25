@@ -3,8 +3,8 @@ plugins {
     id 'idea'
 }
 
-group 'org.iota'
-version '0.2'
+group 'org.iota.'
+version '0.1-SNAPSHOT'
 
 sourceCompatibility = 1.8
 repositories {
@@ -24,7 +24,7 @@ dependencies {
 
 task fatJar(type: Jar) {
     manifest {
-        attributes 'Main-Class': 'org.iota.ixi.IxiREST'
+        attributes 'Main-Class': 'org.iota.ixi.ChatIxi'
     }
     baseName = 'chat.ixi'
     destinationDir = file("$rootDir/")
