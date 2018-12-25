@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>chat.ixi</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <script src="jquery-3.3.1.min.js"></script>
+    <script src="main.js"></script>
+</head>
+<body>
+<div id="main">
+
+    <!-- CHANNELS -->
+    <div id="channels" class="main_row">
+        <div class="main_row_title">channels</div>
+    </div>
+
+    <!-- CHAT -->
+    <div id="chat" class="main_row">
+        <div id="log">
+            <div id="channel_header"></div>
+            <div id="msgs"></div>
+        </div>
+        <div id="input">
+            <textarea id="message" spellcheck="false" onkeypress="if ((event.keyCode ? event.keyCode : event.which) == 13) { const $this = $(this); const value = $this.val(); submit(); setTimeout(function () { $this.val(value) }, 1);}"></textarea>
+            <input type="button" id="submit" value="submit" onclick="submit()">
+        </div>
+    </div>
+
+    <!-- USERS -->
+    <div id="users" class="main_row">
+        <div class="main_row_title">users</div>
+        <div class="user">Samuel</div>
+        <div class="user">Lukas</div>
+    </div>
+
+</div>
+<script>
+    const initial_channels = ['speculation', 'casual', 'omega', 'qubic', 'announcements'];
+    initial_channels.sort().forEach(function(channel) { add_channel(channel); });
+    change_channel("speculation");
+    read_message();
+</script>
+</body>
+</html>

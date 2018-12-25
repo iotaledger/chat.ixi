@@ -1,0 +1,152 @@
+* {
+    box-sizing: border-box;
+    vertical-align: top;
+}
+
+body {
+    background-color: #444;
+    margin: 0;
+    font-size: 0;
+    font-family: "DejaVu Sans", sans-serif;
+    transition: background-color 0.2s;
+}
+
+.main_row {
+    height: 100vh;
+    color: #E7DFDD;
+}
+
+.main_row .main_row_title {
+    font-size: 30px;
+    margin-top: 30px;
+    margin-bottom: 50px;
+    text-align: center;
+}
+
+#users,
+#channels {
+    width: 20vw;
+    position: absolute;
+    padding: 30px;
+    top: 0;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+#channels {
+    left: 0;
+}
+
+#users .user,
+#channels .channel {
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+#channels .channel {
+    border-left: 5px solid rgba(255, 255, 255, 0.3);
+    font-weight: bold;
+    transition: 0.3s border-left-color, 0.3s color;
+    margin: 10px 0;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+#channels .channel:hover {
+    border-left: 5px solid #E7DFDD;
+    color: #FFF;
+}
+
+#users {
+    right: 0;
+}
+
+#chat  {
+    width: 60vw;
+    margin: 0 auto;
+}
+
+#chat #log {
+    padding: 50px;
+    height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+#chat #channel_header {
+    color: #E7DFDD;
+    font-size: 40px;
+    margin-bottom: 50px;
+}
+
+#chat #log .msg {
+    border-left: 10px solid rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    margin: 10px 0;
+    color: #E7DFDD;
+    border-radius: 3px;
+    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+}
+
+#chat #log .msg .msg_head {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+#chat #log .msg .msg_head .username {
+    font-weight: bold;
+    color: #E7DFDD;
+    cursor: pointer;
+}
+
+#chat #log .msg .msg_body {
+    font-size: 12px;
+}
+
+#chat #input {
+    height: calc(200px);
+    padding: 50px;
+}
+
+#chat #input textarea {
+    width: 85%;
+    height: 100px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: none;
+    resize: none;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 20px;
+    font-size: 14px;
+    font-family: "DejaVu Sans", sans-serif;
+    transition: 0.1s background-color, 0.1s color;
+    line-height: 1.6em;
+}
+
+#chat #input textarea:focus {
+    outline: none;
+    background-color: rgba(0, 0, 0, 0.4);
+    color: #E7DFDD;
+}
+
+#chat #input input[type=button] {
+    width: 15%;
+    height: 100px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    color: #E7DFDD;
+    transition: 0.1s background-color;
+}
+
+#chat #input input[type=button]:focus {
+    outline: none;
+}
+
+#chat #input input[type=button]:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
