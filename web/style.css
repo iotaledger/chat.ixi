@@ -130,9 +130,38 @@ body {
 }
 
 #chat #input {
-    height: calc(200px);
+    height: 200px;
     padding: 50px;
 }
+
+#chat #input_loading {
+    position: relative;
+    margin-top: -200px;
+    height: 200px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 30px;
+}
+
+#chat #input_loading.hidden {
+    display: none;
+}
+
+#chat #input_loading #loading_circle {
+    width: 140px;
+    height: 140px;
+    background-image: url("loading.png");
+    background-size: 140px;
+    margin: 0 auto;
+
+    animation:spin 0.6s linear infinite;
+    -webkit-animation:spin 0.6s linear infinite;
+    -moz-animation:spin 0.6s linear infinite;
+}
+
+
+@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
 
 #chat #input textarea {
     width: 85%;

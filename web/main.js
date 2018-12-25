@@ -1,4 +1,4 @@
-const REST_URL = "http://173.249.10.97:4567/";
+const REST_URL = "http://localhost:4567/";
 const REST_URL_GET = REST_URL+"getMessage/";
 const REST_URL_SUBMIT = REST_URL+"submitMessage/";
 const REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
@@ -90,11 +90,13 @@ function read_message() {
 }
 
 function submit_message(channel, message) {
+    const $input_loading = $('#input_loading');
+    $input_loading.removeClass("hidden");
     $.ajax({
         url: REST_URL_SUBMIT+channel+"/",
         data: [{"name": "message", "value": encode(message)}],
-        success: function () { },
-        error: function (err) { console.log(err) }
+        success: function (data) { console.log("submitted"); $input_loading.addClass("hidden"); },
+        error: function (err) { console.log(err); $input_loading.addClass("hidden"); },
     });
 }
 
