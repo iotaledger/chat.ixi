@@ -1,9 +1,8 @@
-const REST_URL = "http://188.68.46.251:4567/";
+const REST_URL = "http://localhost:4567/";
 const REST_URL_GET = REST_URL+"getMessage/";
 const REST_URL_SUBMIT = REST_URL+"submitMessage/";
 const REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
 const REST_URL_ADD_CONTACT = REST_URL+"addContact/";
-const REST_URL_GET_PUBLIC_KEY = REST_URL+"getMyPublicKey";
 const REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers";
 const REST_URL_INIT = REST_URL+"init";
 
@@ -69,6 +68,7 @@ function show_message(tx) {
     const username = tx['username'];
     const user_id = tx['user_id'];
     const is_trusted = tx['is_trusted'];
+    const is_own = tx['is_own'];
 
     if(channel !== current_channel) { return; }
 
@@ -79,7 +79,7 @@ function show_message(tx) {
         .append($('<label>').addClass("username").text(username + "@" + user_id.substr(0, 8)))
         .append(" at " + time);
     const $msg_body = $('<div>').addClass("msg_body").text(decode(message));
-    const $msg = $('<div>').addClass("msg").addClass("hidden").addClass(is_trusted ? "trusted" : "untrusted")
+    const $msg = $('<div>').addClass("msg").addClass("hidden").addClass(is_own ? "own" : is_trusted ? "trusted" : "untrusted")
         .append($msg_head)
         .append($msg_body);
     $('#msgs').append($msg);
@@ -95,12 +95,13 @@ function show_message(tx) {
 
 function show_online_users() {
     const $online = $("<div>").attr("id", "online");
-    for(let userid in online_users) {
+
+    Object.keys(online_users).sort().forEach(function(userid) {
         const online_user = online_users[userid];
         const age = Math.ceil((new Date() - online_user['timestamp']) / 60000);
         const $username = online_user['username'] + "@" + userid.substr(0, 8) + (age <= 5 ? "" : " ("+age+" min)");
         $online.append($("<div>").addClass("user").addClass(age <= 5 ? "online" : "afk").text($username));
-    }
+    });
     $('#users #online').html($online.html());
 }
 
@@ -157,11 +158,12 @@ function init() {
             change_channel("announcements");
             read_message();
 
-            setInterval(update_online_users, 60000);
+            setInterval(update_online_users, 30000);
             setTimeout(function () {
                 setInterval(submitLifeSign, 300000);
                 submitLifeSign();
-            }, 30000);
+                setTimeout(update_online_users, 10000);
+            }, 10000);
             update_online_users();
         },
         error: function (err) { console.log(err); },
@@ -169,7 +171,12 @@ function init() {
 }
 
 function submitLifeSign() {
-    submit_message("LIFESIGN".padEnd(81, "9"), "");
+
+    $.ajax({
+        url: REST_URL_SUBMIT+"LIFESIGN".padEnd(81, "9")+"/",
+        data: [{"name": "message", "value":  ""}],
+        error: function (err) { console.log(err); },
+    });
 }
 
 function submit() {
@@ -194,11 +201,10 @@ function scrollToBottom() {
 }
 
 function addContact() {
-    const public_key = window.prompt("Public Key:");
+    const user_id = window.prompt("User ID:");
 
     $.ajax({
-        url: REST_URL_ADD_CONTACT,
-        data: [{"name": "public_key", "value": public_key}],
+        url: REST_URL_ADD_CONTACT + user_id,
         success: function(data) {
             for(var channel in channels) {
                 channels[channel].forEach(function (msg) {
@@ -207,17 +213,6 @@ function addContact() {
                 })
             };
             show_all_messages();
-        },
-        error: function (err) { console.log(err); },
-    });
-}
-
-function showPublicKey() {
-
-    $.ajax({
-        url: REST_URL_GET_PUBLIC_KEY,
-        success: function (data) {
-            window.prompt("Your Public Key:", data);
         },
         error: function (err) { console.log(err); },
     });

@@ -133,10 +133,18 @@ body {
     border-radius: 3px;
     box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
     transition: 0.5s opacity;
+    margin-left: 20px;
+}
+
+#chat #log .msg.own {
+    margin-right: 20px;
+    margin-left: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-left: 10px solid #FFF;
 }
 
 #chat #log .msg.trusted {
-    border-left: 10px solid #FFF;
+    border-left: 10px solid rgba(255, 255, 255, 0.7);
 }
 
 #chat #log .msg.hidden {

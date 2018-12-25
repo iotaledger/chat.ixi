@@ -1,7 +1,5 @@
 package org.iota.ixi.utils;
 
-import org.iota.ixi.RSA;
-
 import java.io.File;
 import java.io.IOException;
 

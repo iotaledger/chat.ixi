@@ -1,7 +1,5 @@
 package org.iota.ixi.utils;
 
-import org.iota.ixi.RSA;
-
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;

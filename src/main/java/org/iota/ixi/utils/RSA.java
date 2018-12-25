@@ -1,4 +1,4 @@
-package org.iota.ixi;
+package org.iota.ixi.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;

@@ -1,6 +1,5 @@
 package org.iota.ixi.utils;
 
-import org.iota.ixi.RSA;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -3,7 +3,7 @@ package org.iota.ixi.model;
 import com.iota.curl.IotaCurlHash;
 import org.iota.ict.model.Transaction;
 import org.iota.ict.utils.Trytes;
-import org.iota.ixi.RSA;
+import org.iota.ixi.utils.RSA;
 import org.iota.ixi.utils.KeyPair;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,6 +20,7 @@ public class Message {
     public final String signature;
     public final String publicKey;
     public final boolean isTrusted;
+    public final boolean isOwn;
 
     public Message() {
         timestamp = 0;
@@ -30,9 +31,10 @@ public class Message {
         publicKey = "";
         signature = "";
         isTrusted = false;
+        isOwn = false;
     }
 
-    public Message(Transaction transaction, Set<String> contacts) throws JSONException, RSA.RSAException {
+    public Message(Transaction transaction, Set<String> contacts, String ownUserid) throws JSONException, RSA.RSAException {
         final JSONObject jsonObject = new JSONObject(transaction.decodedSignatureFragments);
         timestamp = transaction.issuanceTimestamp;
         username = jsonObject.getString(Fields.username.name());
@@ -42,7 +44,8 @@ public class Message {
         userid = generateUserid(publicKey);
         signature = jsonObject.getString(Fields.signature.name());
         RSA.verify(getSignedData(), signature, KeyPair.publicKeyFromString(publicKey));
-        isTrusted = contacts.contains(publicKey);
+        isTrusted = contacts.contains(userid);
+        isOwn = userid.equals(ownUserid);
     }
 
     Message(MessageBuilder builder) {
@@ -57,12 +60,14 @@ public class Message {
         } catch (RSA.RSAException e) {
             throw new RuntimeException(e);
         }
+        isOwn = true;
         isTrusted = true;
     }
 
-    private String generateUserid(String publicKey) {
+    public static String generateUserid(String publicKey) {
         String publicKeyTrytes = Trytes.fromAscii(publicKey);
-        return IotaCurlHash.iotaCurlHash(publicKeyTrytes, publicKeyTrytes.length(), 123);
+        String publicKeyHash = IotaCurlHash.iotaCurlHash(publicKeyTrytes, publicKeyTrytes.length(), 123);
+        return publicKeyHash.substring(0, 8);
     }
 
     private String getSignedData() {
@@ -80,10 +85,11 @@ public class Message {
         jsonObject.put(Fields.signature.name(), signature);
         jsonObject.put(Fields.public_key.name(), publicKey);
         jsonObject.put(Fields.is_trusted.name(), isTrusted);
+        jsonObject.put(Fields.is_own.name(), isOwn);
         return jsonObject.toString();
     }
 
     private enum Fields {
-        username, user_id, message, timestamp, channel, public_key, signature, is_trusted
+        username, user_id, message, timestamp, channel, public_key, signature, is_trusted, is_own
     }
 }

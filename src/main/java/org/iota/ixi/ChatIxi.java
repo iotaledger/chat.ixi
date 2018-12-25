@@ -10,7 +10,6 @@ import org.iota.ict.utils.Trytes;
 import org.iota.ixi.model.Message;
 import org.iota.ixi.model.MessageBuilder;
 import org.iota.ixi.utils.KeyManager;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import spark.Filter;
 
@@ -25,10 +24,11 @@ import static spark.Spark.get;
 public class ChatIxi extends IxiModule {
 
     private final BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
-    private String username;
+    private final String username;
+    private final String userid;
     private final org.iota.ixi.utils.KeyPair keyPair;
     private Set<String> contacts = new HashSet<>();
-    private Set<String> channels = new HashSet<>();
+    private GossipFilter gossipFilter = new GossipFilter();
 
     public static void main(String[] args) {
         new ChatIxi(args.length > 0 ? args[0] : "anonymous");
@@ -38,7 +38,8 @@ public class ChatIxi extends IxiModule {
         super("chat.ixi");
         this.username = username;
         this.keyPair = KeyManager.loadKeyPair();
-        contacts.add(keyPair.getPublicAsString());
+        this.userid = Message.generateUserid(keyPair.getPublicAsString());
+        contacts.add(userid);
         System.out.println("Waiting for Ict to connect ...");
     }
 
@@ -50,21 +51,16 @@ public class ChatIxi extends IxiModule {
             response.header("Access-Control-Allow-Methods", "GET");
         });
 
-        get("/getMyPublicKey", (request, response) -> keyPair.getPublicAsString());
-
         get("/init", (request, response) -> {
             synchronized(this) {
                 messages.add(new Message());
-                channels = new HashSet<>();
-                setGossipFilter(new GossipFilter());
+                setGossipFilter(gossipFilter);
             }
             return "";
         });
 
-        get("/addContact/", (request, response) -> {
-            String publicKey =  request.queryParams("public_key");
-            contacts.add(publicKey);
-            System.out.println("added public key: " + publicKey);
+        get("/addContact/:userid", (request, response) -> {
+            contacts.add(request.params(":userid"));
             return "";
         });
 
@@ -76,17 +72,12 @@ public class ChatIxi extends IxiModule {
 
             synchronized (this) { // synchronized necessary for correct order of setGossipFilter()
                 String channel = request.params(":channel");
-                channels.add(channel);
-                GossipFilter gossipFilter = new GossipFilter();
-                for (String c : channels)
-                    gossipFilter.watchAddress(c);
+                gossipFilter.watchAddress(channel);
                 setGossipFilter(gossipFilter);
 
                 Set<Transaction> transactions = findTransactionsByAddress(channel);
-
                 List<Transaction> orderedTransactions = new LinkedList<>(transactions);
                 Collections.sort(orderedTransactions, (tx1, tx2) -> Long.compare(tx1.issuanceTimestamp, tx2.issuanceTimestamp));
-
                 for(Transaction transaction : orderedTransactions)
                     addTransactionToQueue(transaction);
             }
@@ -122,7 +113,7 @@ public class ChatIxi extends IxiModule {
         JSONObject onlineUsers = new JSONObject();
         for(Transaction transaction : recentLifeSigns)
             try {
-                Message message = new Message(transaction, contacts);
+                Message message = new Message(transaction, contacts, userid);
                 if(onlineUsers.has(message.userid) && onlineUsers.getJSONObject(message.userid).getLong("timestamp") > message.timestamp)
                     continue;
 
@@ -175,7 +166,7 @@ public class ChatIxi extends IxiModule {
 
     public void addTransactionToQueue(Transaction transaction) {
         try {
-            Message message = new Message(transaction, contacts);
+            Message message = new Message(transaction, contacts, userid);
             if(message.message.length() > 0)
                 messages.add(message);
         } catch (Throwable t) {
