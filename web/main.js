@@ -113,8 +113,10 @@ function read_message() {
         dataType: "json",
         url: REST_URL_GET,
         data: [],
-        success: function (tx) {
-            new_message(tx);
+        success: function (txs) {
+            txs.forEach(function (tx) {
+                new_message(tx);
+            });
             read_message();
         },
         error: function (err) { console.log(err) }

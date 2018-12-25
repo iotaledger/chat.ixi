@@ -74,8 +74,7 @@ public class Message {
         return username+message+channel;
     }
 
-    @Override
-    public String toString() {
+    public JSONObject toJSON() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(Fields.timestamp.name(), timestamp);
         jsonObject.put(Fields.username.name(), username);
@@ -86,7 +85,12 @@ public class Message {
         jsonObject.put(Fields.public_key.name(), publicKey);
         jsonObject.put(Fields.is_trusted.name(), isTrusted);
         jsonObject.put(Fields.is_own.name(), isOwn);
-        return jsonObject.toString();
+        return jsonObject;
+    }
+
+    @Override
+    public String toString() {
+        return toJSON().toString();
     }
 
     private enum Fields {

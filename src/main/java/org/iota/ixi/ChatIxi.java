@@ -10,6 +10,7 @@ import org.iota.ict.utils.Trytes;
 import org.iota.ixi.model.Message;
 import org.iota.ixi.model.MessageBuilder;
 import org.iota.ixi.utils.KeyManager;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import spark.Filter;
 
@@ -85,8 +86,14 @@ public class ChatIxi extends IxiModule {
         });
 
         get("/getMessage/", (request, response) -> {
-            Message message = messages.take();
-            return message.toString();
+            JSONArray array = new JSONArray();
+            synchronized (messages) {
+                do {
+                    array.put(messages.take().toJSON());
+                }
+                while (!messages.isEmpty() && array.length() < 100);
+            }
+            return array.toString();
         });
 
         get("/getOnlineUsers", (request, response) -> {
@@ -172,6 +179,7 @@ public class ChatIxi extends IxiModule {
                 messages.add(message);
         } catch (Throwable t) {
             System.err.println(t.getMessage());
+            t.printStackTrace();
         }
     }
 
