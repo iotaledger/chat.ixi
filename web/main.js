@@ -74,6 +74,8 @@ function show_message(tx) {
     }, 0);
 
     last_read_of_channel[current_channel] = channels[current_channel].length;
+
+    scrollToBottom();
 }
 
 function read_message() {
@@ -133,4 +135,9 @@ function decode(str) {
     return (str+"").replace(/&#\d+;/gm,function(s) {
         return String.fromCharCode(s.match(/\d+/gm)[0]);
     })
+}
+
+function scrollToBottom() {
+    var objDiv = document.getElementById("log");
+    objDiv.scrollTop = objDiv.scrollHeight;
 }
