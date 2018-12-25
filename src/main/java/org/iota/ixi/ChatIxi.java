@@ -9,11 +9,12 @@ import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
 import org.iota.ict.utils.Constants;
 import org.iota.ict.utils.Trytes;
+import org.iota.ixi.utils.KeyManager;
+import org.iota.ixi.utils.KeyPair;
 import org.json.JSONObject;
 import spark.Filter;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.security.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,8 +29,7 @@ public class ChatIxi extends IxiModule {
     private GossipFilter gossipFilter = new GossipFilter();
     private BlockingQueue<Transaction> messages = new LinkedBlockingQueue<>();
     private String username;
-    private PublicKey publicKey;
-    private PrivateKey privateKey;
+    private final org.iota.ixi.utils.KeyPair keyPair;
     private Set<PublicKey> contacts = new HashSet<>();
 
     public static void main(String[] args) throws RSA.RSAException, IOException {
@@ -39,26 +39,7 @@ public class ChatIxi extends IxiModule {
     public ChatIxi(String username) throws RSA.RSAException, IOException {
         super("chat.ixi");
         this.username = username;
-
-        File pk = new File("public.key");
-        File sk = new File("private.key");
-
-        if(!pk.exists() || !sk.exists()) {
-            pk.delete();
-            sk.delete();
-
-            KeyPair k = RSA.generateKeyPair();
-
-            String publicKeyString = Keys.publicKeyToString(k.getPublic());
-            String privateKeyString = Keys.privateKeyToString(k.getPrivate());
-
-            Keys.writeToFile(publicKeyString, "public.key");
-            Keys.writeToFile(privateKeyString, "private.key");
-        }
-
-        publicKey = Keys.readPublicKeyFromFile();
-        privateKey = Keys.readPrivateKeyFromFile();
-
+        this.keyPair = KeyManager.loadKeyPair();
     }
 
     @Override
@@ -72,12 +53,12 @@ public class ChatIxi extends IxiModule {
         });
 
         get("/getMyPublicKey", (request, response) -> {
-            return Keys.publicKeyToString(publicKey);
+            return keyPair.getPublicAsString();
         });
 
         get("/addPublicKey/:pk", (request, response) -> {
             String pk = request.params(":pk");
-            contacts.add(Keys.publicKeyFromString(pk));
+            contacts.add(org.iota.ixi.utils.KeyPair.publicKeyFromString(pk));
             return "";
         });
 
@@ -92,11 +73,11 @@ public class ChatIxi extends IxiModule {
             Transaction t = messages.take();
             JSONObject o = new JSONObject(t.decodedSignatureFragments).put("timestamp", t.issuanceTimestamp);
 
-            String username = (String) o.get("username");
-            String message = (String) o.get("message");
-            String channel = (String) o.get("channel");
-            PublicKey pk = Keys.publicKeyFromString((String) o.get("publicKey"));
-            String signature = (String) o.get("signature");
+            String username = o.getString("username");
+            String message = o.getString("message");
+            String channel = o.getString("channel");
+            PublicKey pk = KeyPair.publicKeyFromString(o.getString("publicKey"));
+            String signature = o.getString("signature");
 
             boolean trusted = false;
             if(contacts.contains(pk))
@@ -120,8 +101,8 @@ public class ChatIxi extends IxiModule {
             o.accumulate("username", username);
             o.accumulate("message",message);
             o.accumulate("channel",channel);
-            o.accumulate("publicKey",Keys.publicKeyToString(publicKey));
-            o.accumulate("signature",RSA.sign(username+message+channel, privateKey));
+            o.accumulate("publicKey",keyPair.getPublicAsString());
+            o.accumulate("signature",RSA.sign(username+message+channel, keyPair.privateKey));
 
             b.asciiMessage(o.toString());
 

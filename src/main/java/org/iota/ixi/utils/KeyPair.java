@@ -1,6 +1,7 @@
-package org.iota.ixi;
+package org.iota.ixi.utils;
 
-import java.io.*;
+import org.iota.ixi.RSA;
+
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -8,9 +9,24 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
 
-public final class Keys {
+public final class KeyPair {
 
-    static String publicKeyToString(PublicKey publicKey) {
+    public final PrivateKey privateKey;
+    public final PublicKey publicKey;
+
+    public KeyPair(String publicKeyString, String privateKeyString) {
+        publicKey = publicKeyFromString(publicKeyString);
+        privateKey = privateKeyFromString(privateKeyString);
+    }
+
+
+    public KeyPair() throws RSA.RSAException {
+        java.security.KeyPair keyPair = RSA.generateKeyPair();
+        publicKey = keyPair.getPublic();
+        privateKey = keyPair.getPrivate();
+    }
+
+    public String getPublicAsString() {
         try {
             KeyFactory fact = KeyFactory.getInstance("RSA");
             X509EncodedKeySpec spec = fact.getKeySpec(publicKey, X509EncodedKeySpec.class);
@@ -20,7 +36,7 @@ public final class Keys {
         }
     }
 
-    static String privateKeyToString(PrivateKey privateKey) {
+    public String getPrivateAsString() {
         try {
             KeyFactory fact = KeyFactory.getInstance("RSA");
             PKCS8EncodedKeySpec spec = fact.getKeySpec(privateKey, PKCS8EncodedKeySpec.class);
@@ -33,7 +49,7 @@ public final class Keys {
         }
     }
 
-    private static PrivateKey privateKeyFromString(String s) {
+    static PrivateKey privateKeyFromString(String s) {
         try {
             byte[] clear = Base64.getDecoder().decode(s);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(clear);
@@ -46,7 +62,7 @@ public final class Keys {
         }
     }
 
-    static PublicKey publicKeyFromString(String s) {
+    public static PublicKey publicKeyFromString(String s) {
         try {
             byte[] data = Base64.getDecoder().decode(s);
             X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
@@ -56,59 +72,4 @@ public final class Keys {
             throw new RuntimeException(e);
         }
     }
-
-    static void writeToFile(String data, String filename) {
-        try (PrintStream out = new PrintStream(new FileOutputStream(filename))) {
-            out.print(data);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    static PublicKey readPublicKeyFromFile() throws IOException {
-
-        if(!new File("public.key").exists())
-            return null;
-
-        BufferedReader br = new BufferedReader(new FileReader("public.key"));
-        try {
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-
-            while (line != null) {
-                sb.append(line);
-                sb.append(System.lineSeparator());
-                line = br.readLine();
-            }
-            String everything = sb.toString();
-            return publicKeyFromString(everything);
-
-        } finally {
-            br.close();
-        }
-    }
-
-    static PrivateKey readPrivateKeyFromFile() throws IOException {
-
-        if(!new File("private.key").exists())
-            return null;
-
-        BufferedReader br = new BufferedReader(new FileReader("private.key"));
-        try {
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-
-            while (line != null) {
-                sb.append(line);
-                sb.append(System.lineSeparator());
-                line = br.readLine();
-            }
-            String everything = sb.toString();
-            return privateKeyFromString(everything);
-
-        } finally {
-            br.close();
-        }
-    }
-
 }
