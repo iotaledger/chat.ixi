@@ -9,6 +9,9 @@ body {
     font-size: 0;
     font-family: "DejaVu Sans", sans-serif;
     transition: background-color 0.2s;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .main_row {
@@ -25,16 +28,21 @@ body {
 
 #users,
 #channels {
-    width: 20vw;
+    width: 360px;
     position: absolute;
-    padding: 30px;
+    padding: 50px;
     top: 0;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
     background-color: rgba(0, 0, 0, 0.7);
+    transition: 0.3s left, 0.3s right;
 }
 
 #channels {
-    left: 0;
+    left: 0vw;
+}
+
+#channels:hover {
+    left: 0vw;
 }
 
 #users .user,
@@ -118,8 +126,12 @@ body {
     right: 0;
 }
 
+#users:hover {
+    right: 0;
+}
+
 #chat  {
-    width: 60vw;
+    width: calc(100vw - 720px);
     margin: 0 auto;
 }
 
@@ -259,4 +271,20 @@ body {
 
 #chat #input input[type=button]:hover {
     background-color: rgba(0, 0, 0, 0.8);
+}
+
+
+@media only screen and (max-width: 1400px) {
+
+    #channels {
+        left: -300px;
+    }
+
+    #users {
+        right: -300px;
+    }
+
+    #chat {
+        width: 90vw;
+    }
 }
