@@ -100,7 +100,7 @@ function show_online_users() {
         const online_user = online_users[userid];
         const age = Math.ceil((new Date() - online_user['timestamp']) / 60000);
         const $username = online_user['username'] + "@" + userid.substr(0, 8) + (age <= 5 ? "" : " ("+age+" min)");
-        $online.append($("<div>").addClass("user").addClass(age <= 5 ? "online" : "afk").text($username));
+        $online.append($("<div>").addClass("user").addClass(age <= 5 ? "online" : "afk").addClass(online_user['is_trusted'] ? "trusted" : "").text($username));
     });
     $('#users #online').html($online.html());
 }
@@ -208,7 +208,7 @@ function addContact() {
         success: function(data) {
             for(var channel in channels) {
                 channels[channel].forEach(function (msg) {
-                    if(msg['public_key'] === public_key)
+                    if(msg['user_id'] === user_id)
                         msg['is_trusted'] = true;
                 })
             };

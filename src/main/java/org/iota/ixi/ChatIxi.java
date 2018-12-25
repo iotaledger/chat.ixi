@@ -118,6 +118,7 @@ public class ChatIxi extends IxiModule {
                     continue;
 
                 JSONObject onlineUser = new JSONObject();
+                onlineUser.put("is_trusted", contacts.contains(userid));
                 onlineUser.put("username", message.username);
                 onlineUser.put("timestamp", message.timestamp);
                 onlineUsers.put(message.userid, onlineUser);
