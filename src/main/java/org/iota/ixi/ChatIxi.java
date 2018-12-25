@@ -1,21 +1,15 @@
 package org.iota.ixi;
 
-import com.iota.curl.IotaCurlHash;
 import org.iota.ict.ixi.IxiModule;
-import org.iota.ict.model.Transaction;
 import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
-import org.iota.ict.utils.Constants;
-import org.iota.ict.utils.Trytes;
+import org.iota.ixi.model.Message;
+import org.iota.ixi.model.MessageBuilder;
 import org.iota.ixi.utils.KeyManager;
-import org.iota.ixi.utils.KeyPair;
-import org.json.JSONObject;
 import spark.Filter;
 
-import java.io.*;
-import java.security.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -27,16 +21,16 @@ import static spark.Spark.get;
 public class ChatIxi extends IxiModule {
 
     private GossipFilter gossipFilter = new GossipFilter();
-    private BlockingQueue<Transaction> messages = new LinkedBlockingQueue<>();
+    private BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
     private String username;
     private final org.iota.ixi.utils.KeyPair keyPair;
-    private Set<PublicKey> contacts = new HashSet<>();
+    private Set<String> contacts = new HashSet<>();
 
-    public static void main(String[] args) throws RSA.RSAException, IOException {
-        new ChatIxi(args[0]);
+    public static void main(String[] args) {
+        new ChatIxi(args.length > 0 ? args[0] : "anonymous");
     }
 
-    public ChatIxi(String username) throws RSA.RSAException, IOException {
+    public ChatIxi(String username) {
         super("chat.ixi");
         this.username = username;
         this.keyPair = KeyManager.loadKeyPair();
@@ -52,13 +46,10 @@ public class ChatIxi extends IxiModule {
             response.header("Access-Control-Allow-Methods", "GET");
         });
 
-        get("/getMyPublicKey", (request, response) -> {
-            return keyPair.getPublicAsString();
-        });
+        get("/getMyPublicKey", (request, response) -> keyPair.getPublicAsString());
 
-        get("/addPublicKey/:pk", (request, response) -> {
-            String pk = request.params(":pk");
-            contacts.add(org.iota.ixi.utils.KeyPair.publicKeyFromString(pk));
+        get("/addPublicKey/:public", (request, response) -> {
+            contacts.add(request.params(":public"));
             return "";
         });
 
@@ -69,68 +60,47 @@ public class ChatIxi extends IxiModule {
             return "";
         });
 
-        get("/getMessage/", (request, response) -> {
-            Transaction t = messages.take();
-            JSONObject o = new JSONObject(t.decodedSignatureFragments).put("timestamp", t.issuanceTimestamp);
-
-            String username = o.getString("username");
-            String message = o.getString("message");
-            String channel = o.getString("channel");
-            PublicKey pk = KeyPair.publicKeyFromString(o.getString("publicKey"));
-            String signature = o.getString("signature");
-
-            boolean trusted = false;
-            if(contacts.contains(pk))
-                if(RSA.verify(username+message+channel,signature,pk))
-                    trusted = true;
-
-            o.put("trusted", trusted);
-
-            return o.toString();
-        });
+        get("/getMessage/", (request, response) ->  messages.take().toString());
 
         get("/submitMessage/:channel/", (request, response) -> {
-
             String channel = request.params(":channel");
             String message = request.queryParams("message");
-
-            TransactionBuilder b = new TransactionBuilder();
-            b.address = channel;
-
-            JSONObject o = new JSONObject();
-            o.accumulate("username", username);
-            o.accumulate("message",message);
-            o.accumulate("channel",channel);
-            o.accumulate("publicKey",keyPair.getPublicAsString());
-            o.accumulate("signature",RSA.sign(username+message+channel, keyPair.privateKey));
-
-            b.asciiMessage(o.toString());
-
-            submit(b.build());
-
+            submitMessage(channel, message);
             return "";
-
         });
 
         System.out.println("Connected!");
 
     }
 
+    private void submitMessage(String channel, String message) {
+        Message toSend = createMessage(channel, message);
+        submitMessage(channel, toSend);
+    }
+
+    private Message createMessage(String channel, String message) {
+        MessageBuilder builder = new MessageBuilder();
+        builder.keyPair = keyPair;
+        builder.username = username;
+        builder.message = message;
+        builder.channel = channel;
+        return builder.build();
+    }
+
+    private void submitMessage(String channel, Message message) {
+        TransactionBuilder b = new TransactionBuilder();
+        b.address = channel;
+        b.asciiMessage(message.toString());
+        submit(b.build());
+    }
+
     @Override
     public void onTransactionReceived(GossipReceiveEvent event) {
-        messages.add(event.getTransaction());
-        System.out.println("RECEIVED");
+        messages.add(new Message(event.getTransaction(), contacts));
     }
 
     @Override
     public void onTransactionSubmitted(GossipSubmitEvent event) {
-        messages.add(event.getTransaction());
-        System.out.println("SUBMITTED");
+        messages.add(new Message(event.getTransaction(), contacts));
     }
-
-    private String hash(String s) {
-        String trytes = Trytes.fromAscii(s);
-        return IotaCurlHash.iotaCurlHash(trytes, trytes.length(), Constants.CURL_ROUNDS_BUNDLE_HASH);
-    }
-
 }
