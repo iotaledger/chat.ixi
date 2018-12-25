@@ -2,6 +2,7 @@ const REST_URL = "http://localhost:4567/";
 const REST_URL_GET = REST_URL+"getMessage/";
 const REST_URL_SUBMIT = REST_URL+"submitMessage/";
 const REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
+const REST_URL_INIT = REST_URL+"init";
 
 const CHANNEL_CODES = {};
 
@@ -44,9 +45,11 @@ function update_new_msg_counter(channel) {
 
 function new_message(tx) {
     const channel = tx['channel'];
-    channels[channel].push(tx);
-    show_message(tx);
-    update_new_msg_counter(channel);
+    if(channels[channel] !== undefined) {
+        channels[channel].push(tx);
+        show_message(tx);
+        update_new_msg_counter(channel);
+    }
 }
 
 function show_message(tx) {
@@ -118,6 +121,20 @@ function add_channel(channel_name) {
     $.ajax({
         url: REST_URL_ADD_CHANNEL+CHANNEL_CODES[channel_name],
         error: function (err) { console.log(err) }
+    });
+}
+
+function init() {
+
+    $.ajax({
+        url: REST_URL_INIT,
+        success: function (data) {
+            const initial_channels = ['speculation', 'casual', 'omega', 'qubic', 'announcements'];
+            initial_channels.sort().forEach(function(channel) { add_channel(channel); });
+            change_channel("announcements");
+            read_message();
+        },
+        error: function (err) { console.log(err); },
     });
 }
 

@@ -49,6 +49,15 @@ public class ChatIxi extends IxiModule {
 
         get("/getMyPublicKey", (request, response) -> keyPair.getPublicAsString());
 
+        get("/init", (request, response) -> {
+            synchronized(this) {
+                messages.put(new Message());
+                channels = new HashSet<>();
+                setGossipFilter(new GossipFilter());
+            }
+            return "";
+        });
+
         get("/addPublicKey/:public", (request, response) -> {
             contacts.add(request.params(":public"));
             return "";
@@ -68,7 +77,8 @@ public class ChatIxi extends IxiModule {
                     gossipFilter.watchAddress(c);
                 setGossipFilter(gossipFilter);
 
-                for(Transaction transaction : findTransactionsByAddress(channel))
+                Set<Transaction> transactions = findTransactionsByAddress(channel);
+                for(Transaction transaction : transactions)
                     messages.add(new Message(transaction, contacts));
             }
             return "";

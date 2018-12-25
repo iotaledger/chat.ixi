@@ -18,6 +18,16 @@ public class Message {
     public final String publicKey;
     public final boolean isTrusted;
 
+    public Message() {
+        timestamp = 0;
+        username = "";
+        message = "";
+        channel = "";
+        publicKey = "";
+        signature = "";
+        isTrusted = false;
+    }
+
     public Message(Transaction transaction, Set<String> contacts) throws JSONException {
         final JSONObject jsonObject = new JSONObject(transaction.decodedSignatureFragments);
         timestamp = transaction.issuanceTimestamp;
