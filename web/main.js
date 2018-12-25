@@ -2,6 +2,8 @@ const REST_URL = "http://localhost:4567/";
 const REST_URL_GET = REST_URL+"getMessage/";
 const REST_URL_SUBMIT = REST_URL+"submitMessage/";
 const REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
+const REST_URL_ADD_CONTACT = REST_URL+"addContact/";
+const REST_URL_GET_PUBLIC_KEY = REST_URL+"getMyPublicKey";
 const REST_URL_INIT = REST_URL+"init";
 
 const CHANNEL_CODES = {};
@@ -58,17 +60,18 @@ function show_message(tx) {
     const message = tx['message'];
     const timestamp = tx['timestamp'];
     const username = tx['username'];
+    const is_trusted = tx['is_trusted'];
 
     if(channel !== current_channel) { return; }
 
     const date = new Date(timestamp);
-    const time = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+    const time = ("0"+date.getHours()).slice(-2) + ":" + ("0"+date.getMinutes()).slice(-2) + ":" + ("0"+date.getSeconds()).slice(-2);
 
     const $msg_head = $('<div>').addClass("msg_head")
         .append($('<label>').addClass("username").text(username))
         .append(" at " + time);
     const $msg_body = $('<div>').addClass("msg_body").text(decode(message));
-    const $msg = $('<div>').addClass("msg").addClass("hidden")
+    const $msg = $('<div>').addClass("msg").addClass("hidden").addClass(is_trusted ? "trusted" : "untrusted")
         .append($msg_head)
         .append($msg_body);
     $('#msgs').append($msg);
@@ -157,4 +160,25 @@ function decode(str) {
 function scrollToBottom() {
     var objDiv = document.getElementById("log");
     objDiv.scrollTop = objDiv.scrollHeight;
+}
+
+function addContact() {
+    const public_key = window.prompt("Public Key:");
+
+    $.ajax({
+        url: REST_URL_ADD_CONTACT,
+        data: [{"name": "public_key", "value": public_key}],
+        error: function (err) { console.log(err); },
+    });
+}
+
+function showPublicKey() {
+
+    $.ajax({
+        url: REST_URL_GET_PUBLIC_KEY,
+        success: function (data) {
+            window.prompt("Your Public Key:", data);
+        },
+        error: function (err) { console.log(err); },
+    });
 }

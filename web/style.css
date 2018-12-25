@@ -45,6 +45,16 @@ body {
     cursor: pointer;
 }
 
+#users button {
+    color: #FFF;
+    border-radius: 3px;
+    border: none;
+    padding: 10px 35px;
+    margin: 40px 5px 5px 5px;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
 #channels .channel {
     border-left: 5px solid rgba(255, 255, 255, 0.3);
     font-weight: bold;
@@ -106,6 +116,10 @@ body {
     border-radius: 3px;
     box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
     transition: 0.5s opacity;
+}
+
+#chat #log .msg.trusted {
+    border-left: 10px solid #FFF;
 }
 
 #chat #log .msg.hidden {

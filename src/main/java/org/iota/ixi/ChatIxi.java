@@ -12,8 +12,7 @@ import org.iota.ixi.utils.KeyManager;
 import org.json.JSONException;
 import spark.Filter;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -51,15 +50,17 @@ public class ChatIxi extends IxiModule {
 
         get("/init", (request, response) -> {
             synchronized(this) {
-                messages.put(new Message());
+                messages.add(new Message());
                 channels = new HashSet<>();
                 setGossipFilter(new GossipFilter());
             }
             return "";
         });
 
-        get("/addPublicKey/:public", (request, response) -> {
-            contacts.add(request.params(":public"));
+        get("/addContact/", (request, response) -> {
+            String publicKey =  request.queryParams("public_key");
+            contacts.add(publicKey);
+            System.out.println("added public key: " + publicKey);
             return "";
         });
 
@@ -78,8 +79,12 @@ public class ChatIxi extends IxiModule {
                 setGossipFilter(gossipFilter);
 
                 Set<Transaction> transactions = findTransactionsByAddress(channel);
-                for(Transaction transaction : transactions)
-                    messages.add(new Message(transaction, contacts));
+
+                List<Transaction> orderedTransactions = new LinkedList<>(transactions);
+                Collections.sort(orderedTransactions, (tx1, tx2) -> Long.compare(tx1.issuanceTimestamp, tx2.issuanceTimestamp));
+
+                for(Transaction transaction : orderedTransactions)
+                    addTransactionToQueue(transaction);
             }
             return "";
         });
@@ -124,16 +129,20 @@ public class ChatIxi extends IxiModule {
 
     @Override
     public void onTransactionReceived(GossipReceiveEvent event) {
-        try {
-            Message m = new Message(event.getTransaction(), contacts);
-            messages.add(m);
-        } catch (JSONException e) { ; }
+        addTransactionToQueue(event.getTransaction());
     }
 
     @Override
     public void onTransactionSubmitted(GossipSubmitEvent event) {
-        Message m = new Message(event.getTransaction(), contacts);
-        messages.add(m);
+        addTransactionToQueue(event.getTransaction());
+    }
+
+    public void addTransactionToQueue(Transaction transaction) {
+        try {
+            Message message = new Message(transaction, contacts);
+            if(message.message.length() > 0)
+                messages.add(message);
+        } catch (JSONException e) { ; }
     }
 
 }
