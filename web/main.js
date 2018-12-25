@@ -1,4 +1,4 @@
-const REST_URL = "http://localhost:4567/";
+const REST_URL = "http://188.68.46.251:4567/";
 const REST_URL_GET = REST_URL+"getMessage/";
 const REST_URL_SUBMIT = REST_URL+"submitMessage/";
 const REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
@@ -43,6 +43,8 @@ function show_all_messages() {
     channels[current_channel].forEach(function (tx) {
         show_message(tx);
     });
+    var audio = new Audio('graceful.mp3');
+    audio.play();
 }
 
 function update_new_msg_counter(channel) {
@@ -88,6 +90,7 @@ function show_message(tx) {
     last_read_of_channel[current_channel] = channels[current_channel].length;
 
     scrollToBottom();
+
 }
 
 function show_online_users() {
