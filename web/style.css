@@ -45,6 +45,23 @@ body {
     cursor: pointer;
 }
 
+#users .user:before {
+    content: '.';
+    font-size: 0;
+    vertical-align: text-bottom;
+    background-color: #FFBB00;
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 10px;
+    margin-right: 10px;
+}
+
+
+#users .user.online:before {
+    background-color: #00FF44;
+}
+
 #users button {
     color: #FFF;
     border-radius: 3px;
@@ -141,6 +158,8 @@ body {
 
 #chat #log .msg .msg_body {
     font-size: 12px;
+    word-wrap:break-word;
+    line-height: 1.6em;
 }
 
 #chat #input {

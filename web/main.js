@@ -4,6 +4,7 @@ const REST_URL_SUBMIT = REST_URL+"submitMessage/";
 const REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
 const REST_URL_ADD_CONTACT = REST_URL+"addContact/";
 const REST_URL_GET_PUBLIC_KEY = REST_URL+"getMyPublicKey";
+const REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers";
 const REST_URL_INIT = REST_URL+"init";
 
 const CHANNEL_CODES = {};
@@ -20,6 +21,7 @@ const HUES = {
 var channels = {};
 var last_read_of_channel = {};
 var current_channel;
+var online_users = {};
 
 function change_channel(new_channel_name) {
 
@@ -88,6 +90,17 @@ function show_message(tx) {
     scrollToBottom();
 }
 
+function show_online_users() {
+    const $online = $("<div>").attr("id", "online");
+    for(let userid in online_users) {
+        const online_user = online_users[userid];
+        const age = Math.ceil((new Date() - online_user['timestamp']) / 60000);
+        const $username = online_user['username'] + "@" + userid.substr(0, 8) + (age <= 5 ? "" : " ("+age+" min)");
+        $online.append($("<div>").addClass("user").addClass(age <= 5 ? "online" : "afk").text($username));
+    }
+    $('#users #online').html($online.html());
+}
+
 function read_message() {
     $.ajax({
         dataType: "json",
@@ -140,9 +153,20 @@ function init() {
             initial_channels.sort().forEach(function(channel) { add_channel(channel); });
             change_channel("announcements");
             read_message();
+
+            setInterval(update_online_users, 60000);
+            setTimeout(function () {
+                setInterval(submitLifeSign, 300000);
+                submitLifeSign();
+            }, 30000);
+            update_online_users();
         },
         error: function (err) { console.log(err); },
     });
+}
+
+function submitLifeSign() {
+    submit_message("LIFESIGN".padEnd(81, "9"), "");
 }
 
 function submit() {
@@ -191,6 +215,19 @@ function showPublicKey() {
         url: REST_URL_GET_PUBLIC_KEY,
         success: function (data) {
             window.prompt("Your Public Key:", data);
+        },
+        error: function (err) { console.log(err); },
+    });
+}
+
+
+function update_online_users() {
+    $.ajax({
+        dataType: "json",
+        url: REST_URL_GET_ONLINE_USERS,
+        success: function (data) {
+            online_users = data;
+            show_online_users();
         },
         error: function (err) { console.log(err); },
     });

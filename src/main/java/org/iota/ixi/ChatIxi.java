@@ -6,11 +6,15 @@ import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
+import org.iota.ict.utils.Trytes;
 import org.iota.ixi.model.Message;
 import org.iota.ixi.model.MessageBuilder;
 import org.iota.ixi.utils.KeyManager;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import spark.Filter;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -34,6 +38,7 @@ public class ChatIxi extends IxiModule {
         super("chat.ixi");
         this.username = username;
         this.keyPair = KeyManager.loadKeyPair();
+        contacts.add(keyPair.getPublicAsString());
         System.out.println("Waiting for Ict to connect ...");
     }
 
@@ -93,6 +98,10 @@ public class ChatIxi extends IxiModule {
             return message.toString();
         });
 
+        get("/getOnlineUsers", (request, response) -> {
+            return getOnlineUsers().toString();
+        });
+
         get("/submitMessage/:channel/", (request, response) -> {
             String channel = request.params(":channel");
             String message = request.queryParams("message");
@@ -101,7 +110,34 @@ public class ChatIxi extends IxiModule {
         });
 
         System.out.println("Connected!");
+    }
 
+    public JSONObject getOnlineUsers() {
+        Set<Transaction> recentLifeSigns = new HashSet<>();
+        for(int i = 0; i < 30; i++) {
+            String lifeSignTag = calcLifeSignTag(System.currentTimeMillis()-120000*i);
+            recentLifeSigns.addAll(findTransactionsByTag(lifeSignTag));
+        }
+
+        JSONObject onlineUsers = new JSONObject();
+        for(Transaction transaction : recentLifeSigns)
+            try {
+                Message message = new Message(transaction, contacts);
+                if(onlineUsers.has(message.userid) && onlineUsers.getJSONObject(message.userid).getLong("timestamp") > message.timestamp)
+                    continue;
+
+                JSONObject onlineUser = new JSONObject();
+                onlineUser.put("username", message.username);
+                onlineUser.put("timestamp", message.timestamp);
+                onlineUsers.put(message.userid, onlineUser);
+            } catch (Throwable t) { }
+
+        return onlineUsers;
+    }
+    private static String calcLifeSignTag(long unixMs) {
+        long minuteIndex = unixMs/1000/160;
+        String prefix = "LIFESIGN9";
+        return prefix + Trytes.fromNumber(BigInteger.valueOf(minuteIndex), Transaction.Field.TAG.tryteLength - prefix.length());
     }
 
     private void submitMessage(String channel, String message) {
@@ -122,6 +158,7 @@ public class ChatIxi extends IxiModule {
         TransactionBuilder builder = new TransactionBuilder();
         builder.address = channel;
         builder.asciiMessage(message.toString());
+        builder.tag = calcLifeSignTag(System.currentTimeMillis());
         Transaction transaction = builder.build();
         submit(transaction);
     }
