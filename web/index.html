@@ -13,8 +13,12 @@
 <div id="main">
 
     <!-- CHANNELS -->
-    <div id="channels" class="main_row">
-        <div class="main_row_title">Channels</div>
+    <div id="left_row" class="main_row">
+        <div id="channels">
+            <div class="main_row_title">Channels</div>
+        </div>
+        <hr/>
+        <button onclick="$('#settings').removeClass('hidden');">settings</button>
     </div>
 
     <!-- CHAT -->
@@ -33,12 +37,48 @@
     </div>
 
     <!-- USERS -->
-    <div id="users" class="main_row">
+    <div id="right_row" class="main_row">
         <div class="main_row_title">Users</div>
+        <button onclick="addContact()">add contact</button><br/>
+        <hr/>
         <div id="online"></div>
-        <button onclick="addContact()">add contact</button>
     </div>
 
+</div>
+
+<div id="settings" class="dialog hidden">
+    <h1>Settings</h1>
+    <table>
+        <tr>
+            <th>Content</th>
+        </tr>
+        <tr>
+            <td>chat.ixi API</td>
+            <td><input type="url" placeholder="http://localhost:4567" /></td>
+        </tr>
+        <tr>
+            <td>Hide Strangers</td>
+            <td><input type="checkbox" /></td>
+        </tr>
+        <tr>
+            <th>Design</th>
+        </tr>
+        <tr>
+            <td>Saturation:</td>
+            <td><input type="range" min="0" max="100" /></td>
+        </tr>
+        <tr>
+            <td>Brightness:</td>
+            <td><input type="range" min="0" max="100" /></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <button>save</button><br/>
+                <button onclick="$('#settings').addClass('hidden');">close</button>
+            </td>
+        </tr>
+    </table>
 </div>
 <script>
     init();

@@ -105,7 +105,7 @@ function show_online_users() {
         const $username = online_user['username'] + "@" + userid.substr(0, 8) + (age <= 5 ? "" : " ("+age+" min)");
         $online.append($("<div>").addClass("user").addClass(age <= 5 ? "online" : "afk").addClass(online_user['is_trusted'] ? "trusted" : "").text($username));
     });
-    $('#users #online').html($online.html());
+    $('#right_row #online').html($online.html());
 }
 
 function read_message() {
