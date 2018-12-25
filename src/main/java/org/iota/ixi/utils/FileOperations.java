@@ -1,6 +1,7 @@
 package org.iota.ixi.utils;
 
 import java.io.*;
+import java.util.StringJoiner;
 
 public final class FileOperations {
 
@@ -17,14 +18,13 @@ public final class FileOperations {
             throw new IllegalArgumentException("file "+file.getAbsolutePath()+" does not exist");
         BufferedReader br = new BufferedReader(new FileReader(file));
         try {
-            StringBuilder sb = new StringBuilder();
+            StringJoiner sj = new StringJoiner(System.lineSeparator());
             String line = br.readLine();
             while (line != null) {
-                sb.append(line);
-                sb.append(System.lineSeparator());
+                sj.add(line);
                 line = br.readLine();
             }
-            return sb.toString();
+            return sj.toString();
         } finally {
             br.close();
         }

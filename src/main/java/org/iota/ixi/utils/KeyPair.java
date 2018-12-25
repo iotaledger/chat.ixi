@@ -66,7 +66,7 @@ public final class KeyPair {
         }
     }
 
-    private static PrivateKey privateKeyFromString(String s) {
+    static PrivateKey privateKeyFromString(String s) {
         try {
             byte[] clear = Base64.getDecoder().decode(s);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(clear);
