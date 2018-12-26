@@ -8,6 +8,10 @@ var REST_URL_ADD_CONTACT;
 var REST_URL_GET_ONLINE_USERS;
 var REST_URL_INIT;
 
+
+setInterval(update_online_users, 10000);
+setInterval(submit_life_sign, 10000);
+
 function reset_settings() {
     settings  = {
         "api": "http://localhost:4567/",
@@ -244,11 +248,6 @@ function init() {
             change_channel("announcements");
             read_message();
 
-            setInterval(update_online_users, 30000);
-            setTimeout(function () {
-                setInterval(submit_life_sign, 60000);
-                setTimeout(update_online_users, 10000);
-            }, 10000);
             update_online_users();
             submit_life_sign();
         },
@@ -258,15 +257,18 @@ function init() {
 
 function submit_life_sign() {
 
-    const last_life_sign = get_cookie("last_life_sign");
+    if(REST_URL === undefined)
+        return;
 
-    if(last_life_sign !== undefined && new Date() - last_life_sign < 240000)
-        return alert(new Date() - last_life_sign);
+    const cookie_name = "last_life_sign_" + REST_URL.split(":").join("_").split("/").join("_");
+    const last_life_sign = get_cookie(cookie_name);
+    if((last_life_sign !== undefined && new Date() - last_life_sign < 240000))
+        return;
 
     $.ajax({
         url: REST_URL_SUBMIT+"LIFESIGN".padEnd(81, "9")+"/",
         data: [{"name": "message", "value":  ""}],
-        success: function() { set_cookie("last_life_sign", (new Date()-1) + ""); },
+        success: function() { set_cookie(cookie_name, (new Date()-1) + ""); },
         error: function (err) { console.log(err); },
     });
 }
@@ -322,6 +324,8 @@ function addContact() {
 }
 
 function update_online_users() {
+    if(REST_URL_GET_ONLINE_USERS === undefined)
+        return;
     $.ajax({
         dataType: "json",
         url: REST_URL_GET_ONLINE_USERS,
