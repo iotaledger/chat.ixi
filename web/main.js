@@ -214,6 +214,9 @@ function addContact() {
 
         const user_id = text.value;
 
+        if(!user_id)
+            return;
+
         $.ajax({
             url: REST_URL_ADD_CONTACT + user_id,
             success: function(data) {
