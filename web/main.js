@@ -1,3 +1,7 @@
+window.onerror = function(err) {
+    swal("Woops!", "Looks like there was an error. Check your browser console.", "error");
+};
+
 var settings;
 
 var REST_URL;
@@ -24,34 +28,23 @@ function reset_settings() {
         "bg_saturation": 30
     };
 }
-
-function put_settings() {
-    Object.keys(settings).forEach(function (setting) {
-        $("#settings_"+setting).val(settings[setting]);
-    });
-    $('#settings_hide_strangers').prop("checked", settings['hide_strangers'] === 'true');
-}
-
 function load_settings() {
 
     reset_settings();
     Object.keys(settings).forEach(function (setting) {
         let cookie_value = get_cookie("settings_"+setting);
+        console.log(cookie_value);
         if(cookie_value !== undefined && cookie_value !== "") {
             settings[setting] = cookie_value;
+            console.log(setting + " := " + cookie_value);
         }
     });
 
-    put_settings();
-
-    if(!settings['api'].endsWith("/"))
-        settings['api'] += "/";
-    if(!settings['api'].startsWith("http"))
-        settings['api'] = "http://" + settings['api'];
+    settings['api'] = correct_api(settings['api']);
     set_rest_urls();
 }
 
-function set_rest_urls(rest_url) {
+function set_rest_urls() {
     REST_URL = settings['api'];
     REST_URL_GET = REST_URL+"getMessage/";
     REST_URL_SUBMIT = REST_URL+"submitMessage/";
@@ -60,18 +53,34 @@ function set_rest_urls(rest_url) {
     REST_URL_REMOVE_CONTACT = REST_URL+"removeContact/"
     REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers";
     REST_URL_INIT = REST_URL+"init";
+    console.log(REST_URL);
 }
 
-function save_settings() {
+function put_settings() {
+    Object.keys(settings).forEach(function (setting) {
+        $("#settings_"+setting).val(settings[setting]);
+    });
+    $('#settings_hide_strangers').prop("checked", settings['hide_strangers'] === 'true');
+}
+
+function pull_settings() {
     Object.keys(settings).forEach(function (setting) {
         settings[setting] = $("#settings_"+setting).val();
+    });
+    settings['hide_strangers'] = $("#settings_hide_strangers").is(':checked');
+}
+
+
+function save_settings() {
+
+    if(/Google Inc/.test(navigator.vendor) && /Chrome/.test(navigator.userAgent) && window.location.protocol === 'file:') {
+        swal(':\'(', "Chrome does not support cookies on local pages. Settings will be lost on refresh.", 'warning');
+    }
+
+    Object.keys(settings).forEach(function (setting) {
         set_cookie("settings_"+setting, settings[setting]);
     });
-
-    settings['hide_strangers'] = $("#settings_hide_strangers").is(':checked');
     set_cookie("settings_hide_strangers", settings['hide_strangers']);
-
-    load_settings();
 }
 
 function apply_settings() {
@@ -84,7 +93,7 @@ function set_cookie(name, value) {
     let date = new Date();
     date.setTime(date.getTime() + 7*24*60*60*1000);
     const time = "expires="+ date.toUTCString();
-    document.cookie = name + "=" + value + ";" + time + ";path=/";
+    document.cookie = name + "=" + value + ";" + time + ";";
 }
 
 function get_cookie(name) {
@@ -280,20 +289,48 @@ function add_channel(channel_name) {
 function init() {
 
     $('#loading_page').removeClass("hidden");
+
     $.ajax({
         url: REST_URL_INIT,
         success: function (data) {
             const initial_channels = ['speculation', 'casual', 'omega', 'qubic', 'announcements'];
             initial_channels.sort().forEach(function(channel) { add_channel(channel); });
-            change_channel("announcements");
+            change_channel("speculation");
             read_message();
 
             update_online_users();
             submit_life_sign();
             $('#loading_page').addClass("hidden");
         },
-        error: function (err) { console.log(err); },
+        error: function (err) {
+            $('#loading_page').addClass("hidden");
+            const msg = "Could not connect to <code>" + settings['api'] + "</code><br/><br/>"+JSON.stringify(err) + "</b><br/><br/><hr/>Required format: <code>http://{IP}:4567</code>/, e.g. <code>http://localhost:4567/</code>";
+            swal("Failed to connecto to API", msg, "warning").then(ask_for_api_and_connect);
+        }
     });
+}
+
+function ask_for_api_and_connect() {
+    swal({
+        title: 'Enter chat.ixi API',
+        input: 'text',
+    }).then(function (text) {
+        settings['api'] = correct_api(text.value);
+        set_rest_urls();
+        save_settings();
+        init();
+    })
+}
+
+function correct_api(api) {
+    if(!api.match(/[:][0-9]{1,5}[/]?$/g))
+        api += ":4567/";
+    if(!api.endsWith("/"))
+        api += "/";
+    if(!api.startsWith("http"))
+        api = "http://" + api;
+    return api;
+
 }
 
 function submit_life_sign() {

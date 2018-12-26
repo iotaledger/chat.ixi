@@ -22,7 +22,7 @@
             <div class="main_row_title">Channels</div>
         </div>
         <hr/>
-        <button onclick="$('#settings').removeClass('hidden');">settings</button>
+        <button onclick="put_settings();$('#settings').removeClass('hidden');">settings</button>
     </div>
 
     <!-- CHAT -->
@@ -79,8 +79,8 @@
         <tr>
             <td></td>
             <td>
-                <button onclick="save_settings();load_settings();apply_settings();">save</button><br/>
-                <button onclick="reset_settings();put_settings();save_settings();load_settings();apply_settings();">reset</button><br/>
+                <button onclick="pull_settings();save_settings();apply_settings();">save</button><br/>
+                <button onclick="reset_settings();save_settings();apply_settings();">reset</button><br/>
                 <button onclick="$('#settings').addClass('hidden');">close</button>
             </td>
         </tr>
