@@ -25,6 +25,7 @@ function put_settings() {
 
 function load_settings() {
 
+    reset_settings();
     Object.keys(settings).forEach(function (setting) {
         let cookie_value = get_cookie("settings_"+setting);
         if(cookie_value !== undefined && cookie_value !== "") {
@@ -286,25 +287,33 @@ function scrollToBottom() {
 }
 
 function addContact() {
-    const user_id = window.prompt("User ID:");
-    if(user_id.length != 8)
-        return window.alert("User ID must be 8 trytes long!");
 
-    $.ajax({
-        url: REST_URL_ADD_CONTACT + user_id,
-        success: function(data) {
-            for(var channel in channels) {
-                channels[channel].forEach(function (msg) {
-                    if(msg['user_id'] === user_id)
-                        msg['is_trusted'] = true;
-                })
-            };
-            show_all_messages();
-        },
-        error: function (err) { console.log(err); },
-    });
+    swal({
+        title: 'Enter User ID',
+        input: 'text'
+    }).then(function (text) {
+
+        const user_id = text.value;
+        if(!user_id || user_id.length != 8)
+            return window.alert("User ID must be 8 trytes long!");
+
+        $.ajax({
+            url: REST_URL_ADD_CONTACT + user_id,
+            success: function(data) {
+                for(var channel in channels) {
+                    channels[channel].forEach(function (msg) {
+                        if(msg['user_id'] === user_id)
+                            msg['is_trusted'] = true;
+                    })
+                };
+                show_all_messages();
+            },
+            error: function (err) { console.log(err); },
+        });
+
+    })
+
 }
-
 
 function update_online_users() {
     $.ajax({
