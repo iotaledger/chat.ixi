@@ -29,6 +29,7 @@ function put_settings() {
     Object.keys(settings).forEach(function (setting) {
         $("#settings_"+setting).val(settings[setting]);
     });
+    $('#settings_hide_strangers').prop("checked", settings['hide_strangers'] === 'true');
 }
 
 function load_settings() {
@@ -46,7 +47,7 @@ function load_settings() {
     if(!settings['api'].endsWith("/"))
         settings['api'] += "/";
     if(!settings['api'].startsWith("http"))
-        settings['api'] = "http://" + settings_api;
+        settings['api'] = "http://" + settings['api'];
     set_rest_urls();
 }
 
@@ -66,6 +67,10 @@ function save_settings() {
         settings[setting] = $("#settings_"+setting).val();
         set_cookie("settings_"+setting, settings[setting]);
     });
+
+    settings['hide_strangers'] = $("#settings_hide_strangers").is(':checked');
+    set_cookie("settings_hide_strangers", settings['hide_strangers']);
+
     load_settings();
 }
 
@@ -157,6 +162,9 @@ function show_message(tx) {
     const user_id = tx['user_id'];
     const is_trusted = tx['is_trusted'];
     const is_own = tx['is_own'];
+
+    if(settings['hide_strangers'] === 'true' && !is_trusted)
+        return;
 
     if(channel !== current_channel) { return; }
 
@@ -271,6 +279,7 @@ function add_channel(channel_name) {
 
 function init() {
 
+    $('#loading_page').removeClass("hidden");
     $.ajax({
         url: REST_URL_INIT,
         success: function (data) {
@@ -281,6 +290,7 @@ function init() {
 
             update_online_users();
             submit_life_sign();
+            $('#loading_page').addClass("hidden");
         },
         error: function (err) { console.log(err); },
     });
