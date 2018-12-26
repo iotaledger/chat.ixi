@@ -9,6 +9,9 @@
     <script src="identicon.js/pnglib.js"></script>
     <script src="identicon.js/identicon.js"></script>
     <script src="sweetalert/sweetalert2.all.min.js"></script>
+
+    <link href="js-emoji/emoji.css" rel="stylesheet" type="text/css" />
+    <script src="js-emoji/emoji.js" type="text/javascript"></script>
 </head>
 <body>
 <div id="main">
@@ -86,6 +89,7 @@
 <input type="text" id="copy" style="position: fixed; top: -200px" />
 <script>
     load_settings();
+    const emoji = new EmojiConvertor();
     init();
 </script>
 </body>
