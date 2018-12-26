@@ -340,6 +340,10 @@ table th {
     margin: 5px;
 }
 
+#swal2-content {
+    line-height: 1.8em;
+}
+
 @media only screen and (max-width: 1400px) {
 
     #left_row {

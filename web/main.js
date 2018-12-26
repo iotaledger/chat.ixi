@@ -9,6 +9,7 @@ var REST_URL_GET_ONLINE_USERS;
 var REST_URL_INIT;
 
 const icons = {};
+const audio = new Audio('graceful.mp3');
 
 
 setInterval(update_online_users, 10000);
@@ -129,8 +130,6 @@ function show_all_messages() {
     channels[current_channel].forEach(function (tx) {
         show_message(tx);
     });
-    var audio = new Audio('graceful.mp3');
-    audio.play();
 }
 
 function update_new_msg_counter(channel) {
@@ -169,7 +168,11 @@ function show_message(tx) {
     }
 
     const $msg_head = $('<div>').addClass("msg_head")
-        .append($('<label>').addClass("username").text(username + "@" + user_id.substr(0, 8)))
+        .append($('<label>').addClass("username")
+            .click(function () {
+                copy("@"+user_id, "@"+user_id);
+            })
+        .text(username + "@" + user_id.substr(0, 8)))
         .append(" at " + time);
     const $msg_body = $('<div>').addClass("msg_body").text(decode(message));
     const $msg = $('<div>').addClass("msg").addClass("hidden").addClass(is_own ? "own" : is_trusted ? "trusted" : "untrusted")
@@ -199,15 +202,17 @@ function trytes_to_hex_with_loss(trytes) {
 }
 
 function show_online_users() {
-    const $online = $("<div>").attr("id", "online");
+    const $list = $("<div>");
 
     Object.keys(online_users).sort().forEach(function(userid) {
         const online_user = online_users[userid];
         const age = Math.ceil((new Date() - online_user['timestamp']) / 60000);
-        const $username = online_user['username'] + "@" + userid.substr(0, 8) + (age <= 5 ? "" : " ("+age+" min)");
-        $online.append($("<div>").addClass("user").addClass(age <= 5 ? "online" : "afk").addClass(online_user['is_trusted'] ? "trusted" : "").text($username));
+        const $username = online_user['username'] + "@" + userid + (age <= 5 ? "" : " ("+age+" min)");
+        const $user = $("<div>").addClass("user").addClass(age <= 5 ? "online" : "afk").addClass(online_user['is_trusted'] ? "trusted" : "").text($username).click(function () { copy("@"+userid, "@"+userid); });
+        $list.append($user);
     });
-    $('#right_row #online').html($online.html());
+    const $online = $('#right_row #online');
+    $online.html("").append($list);
 }
 
 function read_message() {
@@ -220,6 +225,8 @@ function read_message() {
                 new_message(tx);
             });
             read_message();
+            if(txs.length > 0)
+                audio.play();
         },
         error: function (err) { console.log(err) }
     });
@@ -318,9 +325,11 @@ function addContact() {
         input: 'text'
     }).then(function (text) {
 
-        const user_id = text.value;
-        if(!user_id || user_id.length != 8)
-            return window.alert("User ID must be 8 trytes long!");
+        let user_id = text.value;
+        if(user_id.startsWith("@"))
+            user_id = user_id.substr(1);
+        if(!user_id || user_id.length !== 8)
+            return swal("", "User ID must be 8 trytes long!", "error");
 
         $.ajax({
             url: REST_URL_ADD_CONTACT + user_id,
@@ -332,6 +341,7 @@ function addContact() {
                     })
                 };
                 show_all_messages();
+                swal("Contact added!", "All messages of user <b>@"+user_id+"</b> will now be marked with a white border.", "success");
             },
             error: function (err) { console.log(err); },
         });
@@ -352,4 +362,11 @@ function update_online_users() {
         },
         error: function (err) { console.log(err); },
     });
+}
+
+function copy(name, content) {
+    $('#copy').val(content);
+    document.getElementById('copy').select();
+    document.execCommand("copy");
+    swal("", "<b>"+name+"</b> copied to clipboard!", "success");
 }
