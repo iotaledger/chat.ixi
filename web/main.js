@@ -173,7 +173,7 @@ function show_message(tx) {
 
     last_read_of_channel[current_channel] = channels[current_channel].length;
 
-    scrollToBottom();
+    scroll_to_bottom();
 
 }
 
@@ -246,21 +246,27 @@ function init() {
 
             setInterval(update_online_users, 30000);
             setTimeout(function () {
-                setInterval(submitLifeSign, 300000);
-                submitLifeSign();
+                setInterval(submit_life_sign, 60000);
                 setTimeout(update_online_users, 10000);
             }, 10000);
             update_online_users();
+            submit_life_sign();
         },
         error: function (err) { console.log(err); },
     });
 }
 
-function submitLifeSign() {
+function submit_life_sign() {
+
+    const last_life_sign = get_cookie("last_life_sign");
+
+    if(last_life_sign !== undefined && new Date() - last_life_sign < 240000)
+        return alert(new Date() - last_life_sign);
 
     $.ajax({
         url: REST_URL_SUBMIT+"LIFESIGN".padEnd(81, "9")+"/",
         data: [{"name": "message", "value":  ""}],
+        success: function() { set_cookie("last_life_sign", (new Date()-1) + ""); },
         error: function (err) { console.log(err); },
     });
 }
@@ -281,7 +287,7 @@ function decode(str) {
     })
 }
 
-function scrollToBottom() {
+function scroll_to_bottom() {
     var objDiv = document.getElementById("log");
     objDiv.scrollTop = objDiv.scrollHeight;
 }
