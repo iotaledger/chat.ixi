@@ -206,23 +206,31 @@ function scrollToBottom() {
 }
 
 function addContact() {
-    const user_id = window.prompt("User ID:");
 
-    $.ajax({
-        url: REST_URL_ADD_CONTACT + user_id,
-        success: function(data) {
-            for(var channel in channels) {
-                channels[channel].forEach(function (msg) {
-                    if(msg['user_id'] === user_id)
-                        msg['is_trusted'] = true;
-                })
-            };
-            show_all_messages();
-        },
-        error: function (err) { console.log(err); },
-    });
+    swal({
+        title: 'Enter User ID',
+        input: 'text'
+    }).then(function (text) {
+
+        const user_id = text.value;
+
+        $.ajax({
+            url: REST_URL_ADD_CONTACT + user_id,
+            success: function(data) {
+                for(var channel in channels) {
+                    channels[channel].forEach(function (msg) {
+                        if(msg['user_id'] === user_id)
+                            msg['is_trusted'] = true;
+                    })
+                };
+                show_all_messages();
+            },
+            error: function (err) { console.log(err); },
+        });
+
+    })
+
 }
-
 
 function update_online_users() {
     $.ajax({
