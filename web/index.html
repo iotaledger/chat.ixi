@@ -54,33 +54,35 @@
         </tr>
         <tr>
             <td>chat.ixi API</td>
-            <td><input type="url" placeholder="http://localhost:4567" /></td>
+            <td><input id="settings_api" type="url" placeholder="http://localhost:4567" /></td>
         </tr>
         <tr>
             <td>Hide Strangers</td>
-            <td><input type="checkbox" /></td>
+            <td><input id="settings_hide_strangers" type="checkbox" /></td>
         </tr>
         <tr>
             <th>Design</th>
         </tr>
         <tr>
             <td>Saturation:</td>
-            <td><input type="range" min="0" max="100" /></td>
+            <td><input id="settings_bg_saturation" type="range" min="0" max="100" /></td>
         </tr>
         <tr>
             <td>Brightness:</td>
-            <td><input type="range" min="0" max="100" /></td>
+            <td><input id="settings_bg_brightness" type="range" min="0" max="100" /></td>
         </tr>
         <tr>
             <td></td>
             <td>
-                <button>save</button><br/>
+                <button onclick="save_settings();load_settings();apply_settings();">save</button><br/>
+                <button onclick="reset_settings();put_settings();save_settings();load_settings();apply_settings();">reset</button><br/>
                 <button onclick="$('#settings').addClass('hidden');">close</button>
             </td>
         </tr>
     </table>
 </div>
 <script>
+    load_settings();
     init();
 </script>
 </body>

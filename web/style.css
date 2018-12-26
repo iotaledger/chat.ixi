@@ -46,14 +46,14 @@ body {
     left: 0vw;
 }
 
-#channels:hover {
+#left_row:hover {
     left: 0vw;
 }
 
 #right_row .user,
 #channels .channel {
     padding: 10px 20px;
-    font-size: 14px;
+    font-size: 12px;
     border-radius: 3px;
     cursor: pointer;
 }
@@ -342,7 +342,7 @@ table th {
 
 @media only screen and (max-width: 1400px) {
 
-    #channels {
+    #left_row {
         left: -300px;
     }
 
@@ -351,6 +351,6 @@ table th {
     }
 
     #chat {
-        width: 90vw;
+        width: calc(100vw - 120px);
     }
 }

@@ -1,10 +1,88 @@
-const REST_URL = "http://localhost:4567/";
-const REST_URL_GET = REST_URL+"getMessage/";
-const REST_URL_SUBMIT = REST_URL+"submitMessage/";
-const REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
-const REST_URL_ADD_CONTACT = REST_URL+"addContact/";
-const REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers";
-const REST_URL_INIT = REST_URL+"init";
+var settings;
+
+var REST_URL;
+var REST_URL_GET;
+var REST_URL_SUBMIT;
+var REST_URL_ADD_CHANNEL;
+var REST_URL_ADD_CONTACT;
+var REST_URL_GET_ONLINE_USERS;
+var REST_URL_INIT;
+
+function reset_settings() {
+    settings  = {
+        "api": "http://localhost:4567/",
+        "hide_strangers": "off",
+        "bg_brightness": 30,
+        "bg_saturation": 30
+    };
+}
+
+function put_settings() {
+    Object.keys(settings).forEach(function (setting) {
+        $("#settings_"+setting).val(settings[setting]);
+    });
+}
+
+function load_settings() {
+
+    Object.keys(settings).forEach(function (setting) {
+        let cookie_value = get_cookie("settings_"+setting);
+        if(cookie_value !== undefined && cookie_value !== "") {
+            settings[setting] = cookie_value;
+        }
+    });
+
+    put_settings();
+
+    if(!settings['api'].endsWith("/"))
+        settings['api'] += "/";
+    if(!settings['api'].startsWith("http"))
+        settings['api'] = "http://" + settings_api;
+    set_rest_urls();
+}
+
+function set_rest_urls(rest_url) {
+    REST_URL = settings['api'];
+    REST_URL_GET = REST_URL+"getMessage/";
+    REST_URL_SUBMIT = REST_URL+"submitMessage/";
+    REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
+    REST_URL_ADD_CONTACT = REST_URL+"addContact/";
+    REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers";
+    REST_URL_INIT = REST_URL+"init";
+}
+
+function save_settings() {
+    Object.keys(settings).forEach(function (setting) {
+        settings[setting] = $("#settings_"+setting).val();
+        set_cookie("settings_"+setting, settings[setting]);
+    });
+    load_settings();
+}
+
+function apply_settings() {
+    $('#channels').html("");
+    $('#online').html("");
+    init();
+}
+
+function set_cookie(name, value) {
+    let date = new Date();
+    date.setTime(date.getTime() + 7*24*60*60*1000);
+    const time = "expires="+ date.toUTCString();
+    document.cookie = name + "=" + value + ";" + time + ";path=/";
+}
+
+function get_cookie(name) {
+    name = name + "=";
+    const decoded_cookie = decodeURIComponent(document.cookie);
+    const parts = decoded_cookie.split(';');
+    for(let i = 0; i < parts.length; i++) {
+        const part = parts[i].trim();
+        if (part.indexOf(name) === 0)
+            return part.substring(name.length, part.length);
+    }
+    return "";
+}
 
 const CHANNEL_CODES = {};
 
@@ -29,12 +107,14 @@ function change_channel(new_channel_name) {
         channels[current_channel] = [];
 
     $('#channel_header').text("#"+new_channel_name);
-
-    let hue = HUES[current_channel[0]];
-    $('body').css("background-color", " hsl(" + hue + ", 70%, 30%)");
-
+    set_channel_bg();
     show_all_messages();
     update_new_msg_counter(current_channel);
+}
+
+function set_channel_bg() {
+    let hue = HUES[current_channel[0]];
+    $('body').css("background-color", " hsl(" + hue + ", "+settings['bg_saturation']+"%, "+settings['bg_brightness']+"%)");
 }
 
 function show_all_messages() {
@@ -207,6 +287,8 @@ function scrollToBottom() {
 
 function addContact() {
     const user_id = window.prompt("User ID:");
+    if(user_id.length != 8)
+        return window.alert("User ID must be 8 trytes long!");
 
     $.ajax({
         url: REST_URL_ADD_CONTACT + user_id,
