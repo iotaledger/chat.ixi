@@ -8,6 +8,8 @@ var REST_URL_ADD_CONTACT;
 var REST_URL_GET_ONLINE_USERS;
 var REST_URL_INIT;
 
+const icons = {};
+
 
 setInterval(update_online_users, 10000);
 setInterval(submit_life_sign, 10000);
@@ -160,7 +162,11 @@ function show_message(tx) {
     const date = new Date(timestamp);
     const time = ("0"+date.getHours()).slice(-2) + ":" + ("0"+date.getMinutes()).slice(-2) + ":" + ("0"+date.getSeconds()).slice(-2);
 
-    const icon = '<img width=48 height=48 src="data:image/png;base64,' + new Identicon(user_id.padEnd(15, "0"), 48).toString() + '">';
+    let icon = icons[user_id];
+    if(!icon) {
+        icon = '<img width=48 height=48 src="data:image/png;base64,' + new Identicon(trytes_to_hex_with_loss(user_id+user_id), 48).toString() + '">';
+        icons[user_id] = icon;
+    }
 
     const $msg_head = $('<div>').addClass("msg_head")
         .append($('<label>').addClass("username").text(username + "@" + user_id.substr(0, 8)))
@@ -179,6 +185,17 @@ function show_message(tx) {
 
     scroll_to_bottom();
 
+}
+
+function trytes_to_hex_with_loss(trytes) {
+    const replacer = {"G": "0", "H": "1", "I": "2", "J": "3", "K": "4", "L": "5", "M": "6", "N": "7", "O": "8", "P": "9",
+    "Q": "0", "R": "2", "S": "4", "T": "6", "U": "8", "V": "0", "W": "A", "X": "B", "Y": "D", "Z": "F"}
+
+    Object.keys(replacer).forEach(function (tryte) {
+        trytes = trytes.split(tryte).join(replacer[tryte]);
+    })
+
+    return trytes.toLowerCase();
 }
 
 function show_online_users() {
