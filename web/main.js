@@ -1,4 +1,4 @@
-const REST_URL = "http://localhost:4567/";
+const REST_URL = "http://188.68.46.251:4567/";
 const REST_URL_GET = REST_URL+"getMessage/";
 const REST_URL_SUBMIT = REST_URL+"submitMessage/";
 const REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
