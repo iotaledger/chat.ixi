@@ -9,11 +9,14 @@ import org.iota.ict.network.event.GossipSubmitEvent;
 import org.iota.ict.utils.Trytes;
 import org.iota.ixi.model.Message;
 import org.iota.ixi.model.MessageBuilder;
+import org.iota.ixi.utils.FileOperations;
 import org.iota.ixi.utils.KeyManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import spark.Filter;
 
+import java.io.IOException;
+import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -28,8 +31,10 @@ public class ChatIxi extends IxiModule {
     private final String username;
     private final String userid;
     private final org.iota.ixi.utils.KeyPair keyPair;
-    private Set<String> contacts = new HashSet<>();
+    private Set<String> contacts;
     private GossipFilter gossipFilter = new GossipFilter();
+
+    private static final java.io.File CONTACTS_FILE = new java.io.File("contacts.txt");
 
     public static void main(String[] args) {
         new ChatIxi(args.length > 0 ? args[0] : "anonymous");
@@ -40,6 +45,7 @@ public class ChatIxi extends IxiModule {
         this.username = username;
         this.keyPair = KeyManager.loadKeyPair();
         this.userid = Message.generateUserid(keyPair.getPublicAsString());
+        contacts = loadContacts();
         contacts.add(userid);
         System.out.println("Waiting for Ict to connect ...");
     }
@@ -62,6 +68,13 @@ public class ChatIxi extends IxiModule {
 
         get("/addContact/:userid", (request, response) -> {
             contacts.add(request.params(":userid"));
+            storeContacts();
+            return "";
+        });
+
+        get("/removeContact/:userid", (request, response) -> {
+            contacts.remove(request.params(":userid"));
+            storeContacts();
             return "";
         });
 
@@ -179,8 +192,26 @@ public class ChatIxi extends IxiModule {
                 messages.add(message);
         } catch (Throwable t) {
             System.err.println(t.getMessage());
-            t.printStackTrace();
         }
     }
 
+    private Set<String> loadContacts() {
+        Set<String> contacts = new HashSet<>();
+        try {
+            if(CONTACTS_FILE.exists()) {
+                String contactsFileContent = FileOperations.readFromFile(CONTACTS_FILE);
+                contacts.addAll(Arrays.asList(contactsFileContent.split(",")));
+            }
+        } catch (IOException e) {
+            System.err.println("Could not read contacts from file " + CONTACTS_FILE.getAbsolutePath() + ": " + e.getMessage());
+        }
+        return contacts;
+    }
+
+    private void storeContacts() {
+        StringJoiner sj = new StringJoiner(",");
+        for(String contact : contacts)
+            sj.add(contact);
+        FileOperations.writeToFile(CONTACTS_FILE, sj.toString());
+    }
 }

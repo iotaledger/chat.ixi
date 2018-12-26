@@ -5,6 +5,7 @@ var REST_URL_GET;
 var REST_URL_SUBMIT;
 var REST_URL_ADD_CHANNEL;
 var REST_URL_ADD_CONTACT;
+var REST_URL_REMOVE_CONTACT;
 var REST_URL_GET_ONLINE_USERS;
 var REST_URL_INIT;
 
@@ -55,6 +56,7 @@ function set_rest_urls(rest_url) {
     REST_URL_SUBMIT = REST_URL+"submitMessage/";
     REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
     REST_URL_ADD_CONTACT = REST_URL+"addContact/";
+    REST_URL_REMOVE_CONTACT = REST_URL+"removeContact/"
     REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers";
     REST_URL_INIT = REST_URL+"init";
 }
@@ -208,7 +210,8 @@ function show_online_users() {
         const online_user = online_users[userid];
         const age = Math.ceil((new Date() - online_user['timestamp']) / 60000);
         const $username = online_user['username'] + "@" + userid + (age <= 5 ? "" : " ("+age+" min)");
-        const $user = $("<div>").addClass("user").addClass(age <= 5 ? "online" : "afk").addClass(online_user['is_trusted'] ? "trusted" : "").text($username).click(function () { copy("@"+userid, "@"+userid); });
+        const $user = $("<div>").addClass("user").addClass(age <= 5 ? "online" : "afk").addClass(online_user['is_trusted'] ? "trusted" : "")
+            .text($username).click(function () { copy("@"+userid, "@"+userid); });
         $list.append($user);
     });
     const $online = $('#right_row #online');
@@ -286,6 +289,7 @@ function submit_life_sign() {
 
     const cookie_name = "last_life_sign_" + REST_URL.split(":").join("_").split("/").join("_");
     const last_life_sign = get_cookie(cookie_name);
+
     if((last_life_sign !== undefined && new Date() - last_life_sign < 240000))
         return;
 
@@ -298,7 +302,9 @@ function submit_life_sign() {
 }
 
 function submit() {
-    submit_message(current_channel, $('#message').val());
+    const message = $('#message').val();
+    if(message.length > 0)
+        submit_message(current_channel, message);
 }
 
 function encode(str) {
@@ -314,11 +320,11 @@ function decode(str) {
 }
 
 function scroll_to_bottom() {
-    var objDiv = document.getElementById("log");
-    objDiv.scrollTop = objDiv.scrollHeight;
+    var log = document.getElementById("log");
+    log.scrollTop = log.scrollHeight;
 }
 
-function addContact() {
+function user_id_dialog(callback) {
 
     swal({
         title: 'Enter User ID',
@@ -330,24 +336,50 @@ function addContact() {
             user_id = user_id.substr(1);
         if(!user_id || user_id.length !== 8)
             return swal("", "User ID must be 8 trytes long!", "error");
-
-        $.ajax({
-            url: REST_URL_ADD_CONTACT + user_id,
-            success: function(data) {
-                for(var channel in channels) {
-                    channels[channel].forEach(function (msg) {
-                        if(msg['user_id'] === user_id)
-                            msg['is_trusted'] = true;
-                    })
-                };
-                show_all_messages();
-                swal("Contact added!", "All messages of user <b>@"+user_id+"</b> will now be marked with a white border.", "success");
-            },
-            error: function (err) { console.log(err); },
-        });
-
+        callback(user_id)
     })
+}
 
+function add_contact(user_id) {
+
+    $.ajax({
+        url: REST_URL_ADD_CONTACT + user_id,
+        success: function(data) {
+            for(var channel in channels) {
+                channels[channel].forEach(function (msg) {
+                    if(msg['user_id'] === user_id)
+                        msg['is_trusted'] = true;
+                })
+            }
+            if(online_users[user_id] !== undefined)
+                online_users[user_id]['is_trusted'] = true;
+            show_all_messages();
+            show_online_users();
+            swal("Contact added!", "All messages of user <b>@"+user_id+"</b> will now be marked with a white border.", "success");
+        },
+        error: function (err) { console.log(err); },
+    });
+}
+
+function remove_contact(user_id) {
+
+    $.ajax({
+        url: REST_URL_REMOVE_CONTACT + user_id,
+        success: function(data) {
+            for(var channel in channels) {
+                channels[channel].forEach(function (msg) {
+                    if(msg['user_id'] === user_id)
+                        msg['is_trusted'] = false;
+                })
+            }
+            if(online_users[user_id] !== undefined)
+                online_users[user_id]['is_trusted'] = false;
+            show_all_messages();
+            show_online_users();
+            swal("Contact removed!", "User <b>@"+user_id+"</b> was removed from your contacts.", "success");
+        },
+        error: function (err) { console.log(err); },
+    });
 }
 
 function update_online_users() {
