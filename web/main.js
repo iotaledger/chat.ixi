@@ -15,7 +15,7 @@ var REST_URL_GET_ONLINE_USERS;
 var REST_URL_INIT;
 
 const icons = {};
-const audio = new Audio('graceful.mp3');
+const audio = new Audio('sound.ogg');
 
 
 setInterval(update_online_users, 10000);
