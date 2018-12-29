@@ -203,8 +203,8 @@ function show_message(tx) {
     const urlRegex = /(https?:\/\/|www.)(www.)?(.*)/gim;
 
     const msg = emoji.replace_colons(decode(message).split("&").join("&amp;").split("<").join("&lt;").split(">").join("&gt;"))
-        .replace("/emoji-data/", "https://raw.githubusercontent.com/iamcal/emoji-data/a97b2d2efa64535d6300660eb2cd15ecb584e79e/")
-        .replace(urlRegex, '<a href="http://www.$3" target="_blank">www.$3</a>');
+        .replace(urlRegex, '<a href="http://www.$3" target="_blank">www.$3</a>')
+        .replace("/emoji-data/", "https://raw.githubusercontent.com/iamcal/emoji-data/a97b2d2efa64535d6300660eb2cd15ecb584e79e/");
 
     const $msg_body = $('<div>').addClass("msg_body").html(msg);
     const $msg = $('<div>').addClass("msg").addClass("hidden").addClass(is_own ? "own" : is_trusted ? "trusted" : "untrusted")
