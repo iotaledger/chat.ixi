@@ -3,6 +3,7 @@ package org.iota.ixi.model;
 import com.iota.curl.IotaCurlHash;
 import org.iota.ict.model.Transaction;
 import org.iota.ict.utils.Trytes;
+import org.iota.ixi.ChatIxi;
 import org.iota.ixi.utils.RSA;
 import org.iota.ixi.utils.KeyPair;
 import org.json.JSONException;
@@ -38,8 +39,9 @@ public class Message {
         final JSONObject jsonObject = new JSONObject(transaction.decodedSignatureFragments);
         timestamp = transaction.issuanceTimestamp;
         username = jsonObject.getString(Fields.username.name());
+        ChatIxi.validateUsername(username);
         message = jsonObject.getString(Fields.message.name());
-        channel = jsonObject.getString(Fields.channel.name());
+        channel = transaction.address;
         publicKey = jsonObject.getString(Fields.public_key.name());
         userid = generateUserid(publicKey);
         signature = jsonObject.getString(Fields.signature.name());
@@ -90,7 +92,12 @@ public class Message {
 
     @Override
     public String toString() {
-        return toJSON().toString();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(Fields.username.name(), username);
+        jsonObject.put(Fields.message.name(), message);
+        jsonObject.put(Fields.signature.name(), signature);
+        jsonObject.put(Fields.public_key.name(), publicKey);
+        return jsonObject.toString();
     }
 
     private enum Fields {

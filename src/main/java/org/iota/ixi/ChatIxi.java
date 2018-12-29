@@ -6,6 +6,7 @@ import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
+import org.iota.ict.utils.Properties;
 import org.iota.ict.utils.Trytes;
 import org.iota.ixi.model.Message;
 import org.iota.ixi.model.MessageBuilder;
@@ -36,21 +37,33 @@ public class ChatIxi extends IxiModule {
     private static final java.io.File CONTACTS_FILE = new java.io.File("contacts.txt");
 
     public static void main(String[] args) {
-        new ChatIxi(args.length > 0 ? args[0] : "anonymous");
+        if(args.length == 0) {
+            System.err.println("WARNING: No arguments were passed to IXI module.");
+            System.out.println("You can start chat.ixi like this:    java -jar chat.ixi-{VERSION}.jar {ICT_NAME} {USERNAME}");
+        }
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("\nPlease enter the name of your ICT (Default = "+ (new Properties()).name +"):\n> ");
+        String ictName = scanner.nextLine();
+
+        System.out.println("Please enter your username:\n> ");
+        String username = scanner.nextLine();
+
+        new ChatIxi(ictName, username);
     }
 
-    public ChatIxi(String username) {
-        super("chat.ixi");
+    public ChatIxi(String ictName, String username) {
+        super("chat.ixi", ictName);
         this.username = username;
         this.keyPair = KeyManager.loadKeyPair();
         this.userid = Message.generateUserid(keyPair.getPublicAsString());
-        contacts = loadContacts();
+        this.contacts = loadContacts();
         contacts.add(userid);
-        System.out.println("Waiting for Ict to connect ...");
+        init();
+        System.out.println("CHAT.ixi is now running on port "+spark.Spark.port()+". Open web/index.html in your web browse to access the chat.");
     }
 
-    @Override
-    public void onIctConnect(String name) {
+    public void init() {
 
         after((Filter) (request, response) -> {
             response.header("Access-Control-Allow-Origin", "*");
@@ -118,8 +131,6 @@ public class ChatIxi extends IxiModule {
             submitMessage(channel, message);
             return "";
         });
-
-        System.out.println("Connected!");
     }
 
     public JSONObject getOnlineUsers() {
@@ -212,5 +223,12 @@ public class ChatIxi extends IxiModule {
         for(String contact : contacts)
             sj.add(contact);
         FileOperations.writeToFile(CONTACTS_FILE, sj.toString());
+    }
+
+    public static void validateUsername(String username) {
+        if(username.length() < 3 || username.length() > 20)
+            throw new RuntimeException("Username length must be 3-20.");
+        if(!username.matches("^[A-Za-z0-9\\-._]*$"))
+            throw new RuntimeException("Username contains illegal characters.");
     }
 }

@@ -9,10 +9,10 @@ import org.iota.ict.utils.Properties;
 public class Main {
 
     public static void main(String[] args) {
-        new ChatIxi("anonymous");
         Properties properties = new Properties();
         properties.ixiEnabled = true;
-        properties.ixis.add("chat.ixi");
         new Ict(properties);
+
+        new ChatIxi(properties.name, "anonymous");
     }
 }

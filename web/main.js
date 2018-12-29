@@ -33,10 +33,8 @@ function load_settings() {
     reset_settings();
     Object.keys(settings).forEach(function (setting) {
         let cookie_value = get_cookie("settings_"+setting);
-        console.log(cookie_value);
         if(cookie_value !== undefined && cookie_value !== "") {
             settings[setting] = cookie_value;
-            console.log(setting + " := " + cookie_value);
         }
     });
 
@@ -53,7 +51,6 @@ function set_rest_urls() {
     REST_URL_REMOVE_CONTACT = REST_URL+"removeContact/"
     REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers";
     REST_URL_INIT = REST_URL+"init";
-    console.log(REST_URL);
 }
 
 function put_settings() {
@@ -262,7 +259,7 @@ function submit_message(channel, message) {
     $.ajax({
         url: REST_URL_SUBMIT+channel+"/",
         data: [{"name": "message", "value": encode(message)}],
-        success: function (data) { console.log("submitted"); $input_loading.addClass("hidden"); document.getElementById('message').value = "";  },
+        success: function (data) { $input_loading.addClass("hidden"); document.getElementById('message').value = "";  },
         error: function (err) { console.log(err); $input_loading.addClass("hidden"); },
     });
 }
