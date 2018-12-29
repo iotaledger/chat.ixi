@@ -193,8 +193,8 @@ function show_message(tx) {
             })
         .text(username + "@" + user_id.substr(0, 8)))
         .append(" at " + time);
-    
-    const urlRegex = /^(https?:\/\/|www.)(www.)?(.*)/gim;
+
+    const urlRegex = /(https?:\/\/|www.)(www.)?(.*)/gim;
 
     const msg = emoji.replace_colons(decode(message).split("&").join("&amp;").split("<").join("&lt;").split(">").join("&gt;"))
         .replace("/emoji-data/", "https://raw.githubusercontent.com/iamcal/emoji-data/a97b2d2efa64535d6300660eb2cd15ecb584e79e/")
