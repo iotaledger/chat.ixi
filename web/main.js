@@ -279,8 +279,10 @@ function add_channel(channel_name) {
 
 function remove_channel(channel_name) {
 
+    let code = derive_channel_address_from_name(channel_name);
+
     Object.keys(CHANNEL_CODES).forEach(function (cn) {
-        if(CHANNEL_CODES[cn] === CHANNEL_CODES[channel_name]) {
+        if(CHANNEL_CODES[cn] === code) {
             channels[cn] = undefined;
             $('#channel_'+CHANNEL_CODES[cn]).remove();
         }
@@ -294,6 +296,8 @@ function remove_channel(channel_name) {
 }
 
 function add_channel_internally(channel_name) {
+
+    channel_name = channel_name.replace(/^[#]/g, "");
 
     const code = derive_channel_address_from_name(channel_name);
     CHANNEL_CODES[channel_name] = code;
