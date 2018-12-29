@@ -37,17 +37,26 @@ public class ChatIxi extends IxiModule {
     private static final java.io.File CONTACTS_FILE = new java.io.File("contacts.txt");
 
     public static void main(String[] args) {
+        String ictName = args.length >= 2 ? args[0] : "";
+        String username = args.length >= 2 ? args[1] : "";
+
         if(args.length == 0) {
             System.err.println("WARNING: No arguments were passed to IXI module.");
             System.out.println("You can start chat.ixi like this:    java -jar chat.ixi-{VERSION}.jar {ICT_NAME} {USERNAME}");
+            System.out.println();
+
+            Scanner scanner = new Scanner(System.in);
+
+            System.out.println("Please enter the name of your ICT (Default = "+ (new Properties()).name +")");
+            System.out.print("> ");
+            ictName = scanner.nextLine();
+            System.out.println();
+
+            System.out.println("Please enter your username:");
+            System.out.print("> ");
+            username = scanner.nextLine();
+            System.out.println();
         }
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("\nPlease enter the name of your ICT (Default = "+ (new Properties()).name +"):\n> ");
-        String ictName = scanner.nextLine();
-
-        System.out.println("Please enter your username:\n> ");
-        String username = scanner.nextLine();
 
         new ChatIxi(ictName, username);
     }
