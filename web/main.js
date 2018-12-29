@@ -131,14 +131,20 @@ function change_channel(new_channel_name) {
         channels[current_channel] = [];
 
     $('#channel_header').text("#"+new_channel_name);
-    set_channel_bg();
+    change_colors();
     show_all_messages();
     update_new_msg_counter(current_channel);
 }
 
-function set_channel_bg() {
+function change_colors() {
     let hue = HUES[current_channel[0]];
     $('body').css("background-color", " hsl(" + hue + ", "+settings['bg_saturation']+"%, "+settings['bg_brightness']+"%)");
+
+    let chue = (hue+90)%360;
+    if(chue > 150 && chue < 250) // blue is hard to see
+        chue += 100;
+
+    $("#style").text("a { color: hsl(" + chue + ",  100%, 50%) }");
 }
 
 function show_all_messages() {
@@ -198,7 +204,7 @@ function show_message(tx) {
 
     const msg = emoji.replace_colons(decode(message).split("&").join("&amp;").split("<").join("&lt;").split(">").join("&gt;"))
         .replace("/emoji-data/", "https://raw.githubusercontent.com/iamcal/emoji-data/a97b2d2efa64535d6300660eb2cd15ecb584e79e/")
-        .replace(urlRegex, '<a href="http://www.$3" target="_blank" style="color:orangered">www.$3</a>');
+        .replace(urlRegex, '<a href="http://www.$3" target="_blank">www.$3</a>');
 
     const $msg_body = $('<div>').addClass("msg_body").html(msg);
     const $msg = $('<div>').addClass("msg").addClass("hidden").addClass(is_own ? "own" : is_trusted ? "trusted" : "untrusted")

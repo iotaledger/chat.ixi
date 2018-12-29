@@ -223,6 +223,10 @@ body {
     line-height: 1.6em;
 }
 
+#chat #log .msg .msg_body a {
+    text-shadow: 0 0 2px rgba(0, 0, 0, 1);
+}
+
 #chat #input {
     height: 200px;
     padding: 50px;
