@@ -98,9 +98,12 @@ public class Message {
         jsonObject.put(Fields.signature.name(), signature);
         jsonObject.put(Fields.public_key.name(), publicKey);
 
-
         TransactionBuilder builder = new TransactionBuilder();
         builder.address = channel;
+        if(jsonObject.toString().length() > Transaction.Field.SIGNATURE_FRAGMENTS.tryteLength / 3 * 2) {
+            System.err.println("Message to long, doesn't fit into transaction.");
+            return null;
+        }
         builder.asciiMessage(jsonObject.toString());
         builder.tag = ChatIxi.calcLifeSignTag(System.currentTimeMillis());
         return builder.build();

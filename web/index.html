@@ -34,7 +34,7 @@
             <div id="msgs"></div>
         </div>
         <div id="input">
-            <textarea id="message" spellcheck="false" onkeypress="if ((event.keyCode ? event.keyCode : event.which) == 13) { const $this = $(this); const value = $this.val(); submit(); setTimeout(function () { $this.val(value) }, 1);}"></textarea>
+            <textarea maxlength="580" id="message" spellcheck="false" onkeypress="if ((event.keyCode ? event.keyCode : event.which) == 13) { const $this = $(this); const value = $this.val(); submit(); setTimeout(function () { $this.val(value) }, 1);}"></textarea>
             <input type="button" id="submit" value="submit" onclick="submit()">
         </div>
         <div id="input_loading" class="hidden">

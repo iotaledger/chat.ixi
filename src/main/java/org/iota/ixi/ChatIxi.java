@@ -214,7 +214,9 @@ public class ChatIxi extends IxiModule {
 
     private void submitMessage(String channel, String message) {
         Message toSend = createMessage(channel, message);
-        submit(toSend.toTransaction());
+        Transaction transaction = toSend.toTransaction();
+        if(transaction != null)
+            submit(transaction);
     }
 
     private Message createMessage(String channel, String message) {
