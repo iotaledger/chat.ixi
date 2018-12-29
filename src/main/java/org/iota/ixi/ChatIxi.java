@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 import static spark.Spark.after;
 import static spark.Spark.get;
@@ -37,6 +38,7 @@ public class ChatIxi extends IxiModule {
 
     private static final java.io.File CHANNELS_FILE = new java.io.File("channels.txt");
     private static final java.io.File CONTACTS_FILE = new java.io.File("contacts.txt");
+    private int historySize = 100;
 
     public static void main(String[] args) {
         String ictName = args.length >= 2 ? args[0] : "";
@@ -85,6 +87,7 @@ public class ChatIxi extends IxiModule {
 
         get("/init", (request, response) -> {
             synchronized(this) {
+                try { historySize = Integer.parseInt(request.queryParams("history_size")); } catch (Throwable t) { ; }
                 messages.add(new Message());
                 for(String channel : channelNames) {
                     String channelAddress = deriveChannelAddressFromName(channel);
@@ -172,7 +175,8 @@ public class ChatIxi extends IxiModule {
         Set<Transaction> transactions = findTransactionsByAddress(address);
         List<Transaction> orderedTransactions = new LinkedList<>(transactions);
         Collections.sort(orderedTransactions, (tx1, tx2) -> Long.compare(tx1.issuanceTimestamp, tx2.issuanceTimestamp));
-        for(Transaction transaction : orderedTransactions)
+        List<Transaction> elements = orderedTransactions.stream().limit(historySize).collect(Collectors.toList());
+        for(Transaction transaction : elements)
             addTransactionToQueue(transaction);
     }
 
