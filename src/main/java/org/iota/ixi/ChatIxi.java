@@ -2,7 +2,6 @@ package org.iota.ixi;
 
 import org.iota.ict.ixi.IxiModule;
 import org.iota.ict.model.Transaction;
-import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipReceiveEvent;
 import org.iota.ict.network.event.GossipSubmitEvent;
@@ -16,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import spark.Filter;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
@@ -31,9 +31,11 @@ public class ChatIxi extends IxiModule {
     private final String username;
     private final String userid;
     private final org.iota.ixi.utils.KeyPair keyPair;
-    private Set<String> contacts;
+    private final Set<String> channelNames;
+    private final Set<String> contacts;
     private GossipFilter gossipFilter = new GossipFilter();
 
+    private static final java.io.File CHANNELS_FILE = new java.io.File("channels.txt");
     private static final java.io.File CONTACTS_FILE = new java.io.File("contacts.txt");
 
     public static void main(String[] args) {
@@ -66,7 +68,9 @@ public class ChatIxi extends IxiModule {
         this.username = username;
         this.keyPair = KeyManager.loadKeyPair();
         this.userid = Message.generateUserid(keyPair.getPublicAsString());
-        this.contacts = loadContacts();
+        this.contacts = loadContacts(CONTACTS_FILE);
+        this.channelNames = loadChannels(CHANNELS_FILE);
+        storeChannels();
         contacts.add(userid);
         init();
         System.out.println("CHAT.ixi is now running on port "+spark.Spark.port()+". Open web/index.html in your web browse to access the chat.");
@@ -82,9 +86,14 @@ public class ChatIxi extends IxiModule {
         get("/init", (request, response) -> {
             synchronized(this) {
                 messages.add(new Message());
+                for(String channel : channelNames) {
+                    String channelAddress = deriveChannelAddressFromName(channel);
+                    gossipFilter.watchAddress(channelAddress);
+                    pullChannelHistory(channelAddress);
+                }
                 setGossipFilter(gossipFilter);
             }
-            return "";
+            return new JSONArray(channelNames).toString();
         });
 
         get("/addContact/:userid", (request, response) -> {
@@ -99,24 +108,41 @@ public class ChatIxi extends IxiModule {
             return "";
         });
 
-        get("/addChannel/:channel", (request, response) -> {
-            // addChannel/ is called N times in a very short interval (one time for each channel). Therefore the gossip filter will be changed N times.
+        get("/removeChannel/", (request, response) -> {
+
+            synchronized (this) { // synchronized necessary for correct order of setGossipFilter()
+                String channelName = request.queryParams("name");
+                String channelAddress = deriveChannelAddressFromName(channelName);
+
+                Set<String> channelNamesToRemove = new HashSet<>();
+                for(String c : channelNames)
+                    if(deriveChannelAddressFromName(c).equals(channelAddress))
+                        channelNamesToRemove.add(c);
+                channelNames.removeAll(channelNamesToRemove);
+                storeChannels();
+
+                gossipFilter.unwatchAddress(channelAddress);
+                setGossipFilter(gossipFilter);
+                return "";
+            }
+        });
+
+        get("/addChannel/", (request, response) -> {
             // Due to the delay of setGossipFilter(), it is important to ensure that setGossipFilter() is called in the correct order.
             // Otherwise the newest GossipFilter with N channels might be replaced by an older GossipFilter with L channels (L<N).
             // This would result in missing channels. The synchronized block ensures the correct order.
 
             synchronized (this) { // synchronized necessary for correct order of setGossipFilter()
-                String channel = request.params(":channel");
-                gossipFilter.watchAddress(channel);
-                setGossipFilter(gossipFilter);
+                String channelName = request.queryParams("name");
+                channelNames.add(channelName);
+                storeChannels();
 
-                Set<Transaction> transactions = findTransactionsByAddress(channel);
-                List<Transaction> orderedTransactions = new LinkedList<>(transactions);
-                Collections.sort(orderedTransactions, (tx1, tx2) -> Long.compare(tx1.issuanceTimestamp, tx2.issuanceTimestamp));
-                for(Transaction transaction : orderedTransactions)
-                    addTransactionToQueue(transaction);
+                String channelAddress = deriveChannelAddressFromName(channelName);
+                gossipFilter.watchAddress(channelAddress);
+                setGossipFilter(gossipFilter);
+                pullChannelHistory(channelAddress);
+                return "";
             }
-            return "";
         });
 
         get("/getMessage/", (request, response) -> {
@@ -142,6 +168,14 @@ public class ChatIxi extends IxiModule {
         });
     }
 
+    private void pullChannelHistory(String address) {
+        Set<Transaction> transactions = findTransactionsByAddress(address);
+        List<Transaction> orderedTransactions = new LinkedList<>(transactions);
+        Collections.sort(orderedTransactions, (tx1, tx2) -> Long.compare(tx1.issuanceTimestamp, tx2.issuanceTimestamp));
+        for(Transaction transaction : orderedTransactions)
+            addTransactionToQueue(transaction);
+    }
+
     public JSONObject getOnlineUsers() {
         Set<Transaction> recentLifeSigns = new HashSet<>();
         for(int i = 0; i < 30; i++) {
@@ -165,7 +199,14 @@ public class ChatIxi extends IxiModule {
 
         return onlineUsers;
     }
-    private static String calcLifeSignTag(long unixMs) {
+
+    private String deriveChannelAddressFromName(String channelName) {
+        String trytes = channelName.trim().toUpperCase().replaceAll("[^a-zA-Z0-9]", "");
+        assert Trytes.isTrytes(trytes);
+        return Trytes.padRight(trytes, 81).substring(0, 81);
+    }
+
+    public static String calcLifeSignTag(long unixMs) {
         long minuteIndex = unixMs/1000/160;
         String prefix = "LIFESIGN9";
         return prefix + Trytes.fromNumber(BigInteger.valueOf(minuteIndex), Transaction.Field.TAG.tryteLength - prefix.length());
@@ -173,7 +214,7 @@ public class ChatIxi extends IxiModule {
 
     private void submitMessage(String channel, String message) {
         Message toSend = createMessage(channel, message);
-        submitMessage(channel, toSend);
+        submit(toSend.toTransaction());
     }
 
     private Message createMessage(String channel, String message) {
@@ -183,15 +224,6 @@ public class ChatIxi extends IxiModule {
         builder.message = message;
         builder.channel = channel;
         return builder.build();
-    }
-
-    private void submitMessage(String channel, Message message) {
-        TransactionBuilder builder = new TransactionBuilder();
-        builder.address = channel;
-        builder.asciiMessage(message.toString());
-        builder.tag = calcLifeSignTag(System.currentTimeMillis());
-        Transaction transaction = builder.build();
-        submit(transaction);
     }
 
     @Override
@@ -214,17 +246,37 @@ public class ChatIxi extends IxiModule {
         }
     }
 
-    private Set<String> loadContacts() {
-        Set<String> contacts = new HashSet<>();
+    private Set<String> loadContacts(File file) {
         try {
-            if(CONTACTS_FILE.exists()) {
-                String contactsFileContent = FileOperations.readFromFile(CONTACTS_FILE);
-                contacts.addAll(Arrays.asList(contactsFileContent.split(",")));
-            }
+            return readStringsFromFile(file);
         } catch (IOException e) {
-            System.err.println("Could not read contacts from file " + CONTACTS_FILE.getAbsolutePath() + ": " + e.getMessage());
+            System.err.println("Could not read contacts from file " + file.getAbsolutePath() + ": " + e.getMessage());
+            return  new HashSet<>();
         }
-        return contacts;
+    }
+
+    private Set<String> loadChannels(File file) {
+        final Set<String> defaultChannels = new HashSet<>(Arrays.asList("speculation", "announcements", "ict", "casual"));
+        if(!file.exists())
+            return defaultChannels;
+        try {
+            Set<String> userDefinedChannels = readStringsFromFile(file);
+            if(userDefinedChannels.isEmpty())
+                userDefinedChannels.add("speculation");
+            return userDefinedChannels;
+        } catch (IOException e) {
+            System.err.println("Could not read channels from file " + file.getAbsolutePath() + ": " + e.getMessage());
+            return defaultChannels;
+        }
+    }
+
+    private Set<String> readStringsFromFile(File file) throws IOException {
+        Set<String> strings = new HashSet<>();
+        if(file.exists()) {
+            String channelsFileContent = FileOperations.readFromFile(file);
+            strings.addAll(Arrays.asList(channelsFileContent.split(",")));
+        }
+        return strings;
     }
 
     private void storeContacts() {
@@ -232,6 +284,13 @@ public class ChatIxi extends IxiModule {
         for(String contact : contacts)
             sj.add(contact);
         FileOperations.writeToFile(CONTACTS_FILE, sj.toString());
+    }
+
+    private void storeChannels() {
+        StringJoiner sj = new StringJoiner(",");
+        for(String channelname : channelNames)
+            sj.add(channelname);
+        FileOperations.writeToFile(CHANNELS_FILE, sj.toString());
     }
 
     public static void validateUsername(String username) {

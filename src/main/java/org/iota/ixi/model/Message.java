@@ -2,6 +2,7 @@ package org.iota.ixi.model;
 
 import com.iota.curl.IotaCurlHash;
 import org.iota.ict.model.Transaction;
+import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.utils.Trytes;
 import org.iota.ixi.ChatIxi;
 import org.iota.ixi.utils.RSA;
@@ -90,14 +91,19 @@ public class Message {
         return jsonObject;
     }
 
-    @Override
-    public String toString() {
+    public Transaction toTransaction() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(Fields.username.name(), username);
         jsonObject.put(Fields.message.name(), message);
         jsonObject.put(Fields.signature.name(), signature);
         jsonObject.put(Fields.public_key.name(), publicKey);
-        return jsonObject.toString();
+
+
+        TransactionBuilder builder = new TransactionBuilder();
+        builder.address = channel;
+        builder.asciiMessage(jsonObject.toString());
+        builder.tag = ChatIxi.calcLifeSignTag(System.currentTimeMillis());
+        return builder.build();
     }
 
     private enum Fields {

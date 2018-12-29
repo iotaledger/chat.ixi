@@ -8,6 +8,7 @@ var REST_URL;
 var REST_URL_GET;
 var REST_URL_SUBMIT;
 var REST_URL_ADD_CHANNEL;
+var REST_URL_REMOVE_CHANNEL;
 var REST_URL_ADD_CONTACT;
 var REST_URL_REMOVE_CONTACT;
 var REST_URL_GET_ONLINE_USERS;
@@ -47,6 +48,7 @@ function set_rest_urls() {
     REST_URL_GET = REST_URL+"getMessage/";
     REST_URL_SUBMIT = REST_URL+"submitMessage/";
     REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
+    REST_URL_REMOVE_CHANNEL = REST_URL+"removeChannel/";
     REST_URL_ADD_CONTACT = REST_URL+"addContact/";
     REST_URL_REMOVE_CONTACT = REST_URL+"removeContact/"
     REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers";
@@ -124,7 +126,8 @@ var online_users = {};
 function change_channel(new_channel_name) {
 
     current_channel = CHANNEL_CODES[new_channel_name];
-    if(current_channel === undefined)
+
+    if(channels[current_channel] === undefined)
         channels[current_channel] = [];
 
     $('#channel_header').text("#"+new_channel_name);
@@ -240,7 +243,6 @@ function read_message() {
     $.ajax({
         dataType: "json",
         url: REST_URL_GET,
-        data: [],
         success: function (txs) {
             txs.forEach(function (tx) {
                 new_message(tx);
@@ -266,7 +268,34 @@ function submit_message(channel, message) {
 
 function add_channel(channel_name) {
 
-    const code = channel_name.toUpperCase().padEnd(81, "9");
+    add_channel_internally(channel_name);
+
+    $.ajax({
+        url: REST_URL_ADD_CHANNEL,
+        data: [{"name": "name", "value": channel_name}],
+        error: function (err) { console.log(err) }
+    });
+}
+
+function remove_channel(channel_name) {
+
+    Object.keys(CHANNEL_CODES).forEach(function (cn) {
+        if(CHANNEL_CODES[cn] === CHANNEL_CODES[channel_name]) {
+            channels[cn] = undefined;
+            $('#channel_'+CHANNEL_CODES[cn]).remove();
+        }
+    });
+
+    $.ajax({
+        url: REST_URL_REMOVE_CHANNEL,
+        data: [{"name": "name", "value": channel_name}],
+        error: function (err) { console.log(err) }
+    });
+}
+
+function add_channel_internally(channel_name) {
+
+    const code = derive_channel_address_from_name(channel_name);
     CHANNEL_CODES[channel_name] = code;
     channels[code] = [];
     last_read_of_channel[code] = 0;
@@ -276,11 +305,10 @@ function add_channel(channel_name) {
             .append($('<label>').addClass('new_msg_counter').text(""))
             .click(function () { change_channel(channel_name); });
     $('#channels').append($channel);
+}
 
-    $.ajax({
-        url: REST_URL_ADD_CHANNEL+CHANNEL_CODES[channel_name],
-        error: function (err) { console.log(err) }
-    });
+function derive_channel_address_from_name(channel_name) {
+    return channel_name.trim().toUpperCase().replace(/[^a-zA-Z0-9]*/g, "").padEnd(81, "9").substr(0, 81);
 }
 
 function init() {
@@ -288,11 +316,14 @@ function init() {
     $('#loading_page').removeClass("hidden");
 
     $.ajax({
+        dataType: "json",
         url: REST_URL_INIT,
-        success: function (data) {
-            const initial_channels = ['speculation', 'casual', 'omega', 'qubic', 'announcements'];
-            initial_channels.sort().forEach(function(channel) { add_channel(channel); });
-            change_channel("speculation");
+        success: function (initial_channels) {
+            initial_channels.sort().forEach(function(channel) {
+                add_channel_internally(channel);
+                console.log(channel);
+            });
+            change_channel(initial_channels.includes("speculation") ? "speculation" : initial_channels[0]);
             read_message();
 
             update_online_users();
@@ -442,6 +473,16 @@ function update_online_users() {
         },
         error: function (err) { console.log(err); },
     });
+}
+
+function channel_dialog(callback) {
+    swal({
+        title: 'Enter Channel Name',
+        input: 'text'
+    }).then(function (text) {
+        let channel_name = text.value;
+        callback(channel_name);
+    })
 }
 
 function copy(name, content) {
