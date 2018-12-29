@@ -203,7 +203,7 @@ public class ChatIxi extends IxiModule {
     private String deriveChannelAddressFromName(String channelName) {
         String trytes = channelName.trim().toUpperCase().replaceAll("[^a-zA-Z0-9]", "");
         assert Trytes.isTrytes(trytes);
-        return Trytes.padRight(trytes, 81).substring(0, 81);
+        return Trytes.padRight(trytes.substring(0, Math.min(81, trytes.length())), 81);
     }
 
     public static String calcLifeSignTag(long unixMs) {
