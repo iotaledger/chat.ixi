@@ -221,6 +221,8 @@ body {
     font-size: 12px;
     word-wrap:break-word;
     line-height: 1.6em;
+    max-height: 100px;
+    overflow-y: auto;
 }
 
 #chat #log .msg .msg_body a {
