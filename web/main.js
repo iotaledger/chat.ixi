@@ -14,6 +14,7 @@ var REST_URL_REMOVE_CONTACT;
 var REST_URL_GET_ONLINE_USERS;
 var REST_URL_INIT;
 
+const HISTORY_SIZE = 100;
 const icons = {};
 const audio = new Audio('sound.ogg');
 
@@ -162,6 +163,8 @@ function update_new_msg_counter(channel) {
 function new_message(tx) {
     const channel = tx['channel'];
     if(channels[channel] !== undefined) {
+        if(channels[channel].length >= HISTORY_SIZE)
+            channels[channel].shift();
         channels[channel].push(tx);
         show_message(tx);
         update_new_msg_counter(channel);
@@ -212,15 +215,22 @@ function show_message(tx) {
         .append(icon)
         .append($msg_head)
         .append($msg_body);
+
+
     $('#msgs').append($msg);
+
+    var log = document.getElementById("log");
+    log.scrollTop = log.scrollHeight;
+
     setTimeout(function (e) {
         $msg.removeClass("hidden");
     }, 0);
 
+    const $msgs = $('#msgs .msg');
+    if($msgs.length > HISTORY_SIZE)
+        $msgs.first().remove();
+
     last_read_of_channel[current_channel] = channels[current_channel].length;
-
-    scroll_to_bottom();
-
 }
 
 function trytes_to_hex_with_loss(trytes) {
@@ -332,6 +342,7 @@ function init() {
     $.ajax({
         dataType: "json",
         url: REST_URL_INIT,
+        data: [{'name': 'history_size', 'value': HISTORY_SIZE}],
         success: function (initial_channels) {
             initial_channels.sort().forEach(function(channel) {
                 add_channel_internally(channel);
@@ -410,11 +421,6 @@ function decode(str) {
     return (str+"").replace(/&#\d+;/gm,function(s) {
         return String.fromCharCode(s.match(/\d+/gm)[0]);
     })
-}
-
-function scroll_to_bottom() {
-    var log = document.getElementById("log");
-    log.scrollTop = log.scrollHeight;
 }
 
 function user_id_dialog(callback) {
