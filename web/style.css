@@ -327,10 +327,16 @@ body {
     background-color: rgba(0, 0, 0, 0.8);
 }
 
-.dialog {
-    width: 800px;
+.dialog_row {
     height: 600px;
-    padding: 50px;
+    width: 100vw;
+    top: calc(50% - 300px);
+    position: absolute;
+    text-align: center;
+}
+
+.dialog {
+    padding: 30px 100px;
     box-sizing: padding-box;
     outline: 100vw solid rgba(0, 0, 0, 0.6);
     background-color: #FFFFFF;
@@ -339,15 +345,11 @@ body {
     color: rgba(0, 0, 0, 0.8);
     overflow: auto;
 
-    margin: 0;
-    position: absolute;
-    top: calc(50% - 300px);
-    left: calc(50% - 400px);
-    -ms-transform: translate(-50%, -50%);
-    transform: translate(-50%, -50);
+    display: inline-block;
+    margin: 0 auto;
 }
 
-.dialog.hidden {
+.dialog_row.hidden {
     display: none;
 }
 

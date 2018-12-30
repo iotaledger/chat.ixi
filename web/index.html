@@ -54,7 +54,8 @@
 
 </div>
 
-<div id="settings" class="dialog hidden">
+<div id="settings" class="dialog_row hidden">
+<div class="dialog">
     <h1>Settings</h1>
     <table>
         <tr>
@@ -63,6 +64,10 @@
         <tr>
             <td>chat.ixi API</td>
             <td><input id="settings_api" type="url" placeholder="http://localhost:4567" /></td>
+        </tr>
+        <tr>
+            <td>Messages/Channel</td>
+            <td><input id="settings_history_size" type="number" value="100"/></td>
         </tr>
         <tr>
             <td>Hide Strangers</td>
@@ -82,12 +87,13 @@
         <tr>
             <td></td>
             <td>
-                <button onclick="pull_settings();save_settings();apply_settings();">save</button><br/>
+                <button onclick="pull_settings();save_settings();apply_settings();$('#settings').addClass('hidden');">save</button><br/>
                 <button onclick="reset_settings();save_settings();apply_settings();">reset</button><br/>
                 <button onclick="$('#settings').addClass('hidden');">close</button>
             </td>
         </tr>
     </table>
+</div>
 </div>
 
 <div id="loading_page">

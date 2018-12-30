@@ -3,6 +3,8 @@ window.onerror = function(err) {
 };
 
 var settings;
+var last_life_sign = 0;
+var initialized = false;
 
 var REST_URL;
 var REST_URL_GET;
@@ -14,7 +16,6 @@ var REST_URL_REMOVE_CONTACT;
 var REST_URL_GET_ONLINE_USERS;
 var REST_URL_INIT;
 
-const HISTORY_SIZE = 100;
 const icons = {};
 const audio = new Audio('sound.ogg');
 
@@ -27,7 +28,8 @@ function reset_settings() {
         "api": "http://localhost:4567/",
         "hide_strangers": "off",
         "bg_brightness": 30,
-        "bg_saturation": 30
+        "bg_saturation": 30,
+        "history_size": 100
     };
 }
 function load_settings() {
@@ -41,6 +43,7 @@ function load_settings() {
     });
 
     settings['api'] = correct_api(settings['api']);
+    settings['history_size'] = parseInt(settings['history_size']);
     set_rest_urls();
 }
 
@@ -51,7 +54,7 @@ function set_rest_urls() {
     REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
     REST_URL_REMOVE_CHANNEL = REST_URL+"removeChannel/";
     REST_URL_ADD_CONTACT = REST_URL+"addContact/";
-    REST_URL_REMOVE_CONTACT = REST_URL+"removeContact/"
+    REST_URL_REMOVE_CONTACT = REST_URL+"removeContact/";
     REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers";
     REST_URL_INIT = REST_URL+"init";
 }
@@ -67,6 +70,7 @@ function pull_settings() {
     Object.keys(settings).forEach(function (setting) {
         settings[setting] = $("#settings_"+setting).val();
     });
+    settings['history_size'] = parseInt(settings['history_size']);
     settings['hide_strangers'] = $("#settings_hide_strangers").is(':checked');
 }
 
@@ -149,7 +153,6 @@ function change_colors() {
 }
 
 function show_all_messages() {
-    $('#msgs').html("");
     channels[current_channel].forEach(function (tx) {
         show_message(tx);
     });
@@ -163,7 +166,7 @@ function update_new_msg_counter(channel) {
 function new_message(tx) {
     const channel = tx['channel'];
     if(channels[channel] !== undefined) {
-        if(channels[channel].length >= HISTORY_SIZE)
+        if(channels[channel].length >= settings['history_size'])
             channels[channel].shift();
         channels[channel].push(tx);
         show_message(tx);
@@ -219,6 +222,8 @@ function show_message(tx) {
 
     $('#msgs').append($msg);
 
+    console.log("showed message, now: " + $('#msgs .msg').length);
+
     var log = document.getElementById("log");
     log.scrollTop = log.scrollHeight;
 
@@ -226,9 +231,12 @@ function show_message(tx) {
         $msg.removeClass("hidden");
     }, 0);
 
+
     const $msgs = $('#msgs .msg');
-    if($msgs.length > HISTORY_SIZE)
+    if($msgs.length > settings['history_size']) {
+        //alert($msgs.length)
         $msgs.first().remove();
+    }
 
     last_read_of_channel[current_channel] = channels[current_channel].length;
 }
@@ -239,7 +247,7 @@ function trytes_to_hex_with_loss(trytes) {
 
     Object.keys(replacer).forEach(function (tryte) {
         trytes = trytes.split(tryte).join(replacer[tryte]);
-    })
+    });
 
     return trytes.toLowerCase();
 }
@@ -257,22 +265,6 @@ function show_online_users() {
     });
     const $online = $('#right_row #online');
     $online.html("").append($list);
-}
-
-function read_message() {
-    $.ajax({
-        dataType: "json",
-        url: REST_URL_GET,
-        success: function (txs) {
-            txs.forEach(function (tx) {
-                new_message(tx);
-            });
-            read_message();
-            if(txs.length > 0)
-                audio.play();
-        },
-        error: function (err) { console.log(err) }
-    });
 }
 
 function submit_message(channel, message) {
@@ -337,20 +329,19 @@ function derive_channel_address_from_name(channel_name) {
 
 function init() {
 
+    $('#msgs .msg').remove();
     $('#loading_page').removeClass("hidden");
 
     $.ajax({
         dataType: "json",
         url: REST_URL_INIT,
-        data: [{'name': 'history_size', 'value': HISTORY_SIZE}],
+        data: [{'name': 'history_size', 'value': settings['history_size']}],
         success: function (initial_channels) {
-            initial_channels.sort().forEach(function(channel) {
-                add_channel_internally(channel);
-                console.log(channel);
-            });
+            initial_channels.sort().forEach(function(channel) { add_channel_internally(channel); });
             change_channel(initial_channels.includes("speculation") ? "speculation" : initial_channels[0]);
-            read_message();
-
+            if(!initialized)
+                read_message();
+            initialized = true;
             update_online_users();
             submit_life_sign();
             $('#loading_page').addClass("hidden");
@@ -360,6 +351,23 @@ function init() {
             const msg = "Could not connect to <code>" + settings['api'] + "</code><br/><br/>"+JSON.stringify(err) + "</b><br/><br/><hr/>Required format: <code>http://{IP}:4567</code>/, e.g. <code>http://localhost:4567/</code>";
             swal("Failed to connecto to API", msg, "warning").then(ask_for_api_and_connect);
         }
+    });
+}
+
+function read_message() {
+    $.ajax({
+        dataType: "json",
+        url: REST_URL_GET,
+        success: function (txs) {
+            console.log("received " + txs.length);
+            txs.forEach(function (tx) {
+                new_message(tx);
+            });
+            read_message();
+            if(txs.length > 0)
+                audio.play();
+        },
+        error: function (err) { console.log(err) }
     });
 }
 
@@ -391,16 +399,18 @@ function submit_life_sign() {
     if(REST_URL === undefined)
         return;
 
-    const cookie_name = "last_life_sign_" + REST_URL.split(":").join("_").split("/").join("_");
-    const last_life_sign = get_cookie(cookie_name);
+    const cookie_name = "last_life_sign";
+    const c_last_life_sign = get_cookie(cookie_name);
+    let lls = c_last_life_sign === undefined || c_last_life_sign === "" ? last_life_sign : c_last_life_sign;
 
-    if((last_life_sign !== undefined && new Date() - last_life_sign < 240000))
+    console.log(lls  + ", " + (new Date() - lls));
+    if((new Date() - lls < 240000))
         return;
 
     $.ajax({
         url: REST_URL_SUBMIT+"LIFESIGN".padEnd(81, "9")+"/",
         data: [{"name": "message", "value":  ""}],
-        success: function() { set_cookie(cookie_name, (new Date()-1) + ""); },
+        success: function() { last_life_sign = (new Date()-1); set_cookie(cookie_name, last_life_sign + ""); },
         error: function (err) { console.log(err); },
     });
 }

@@ -84,8 +84,6 @@ public class Message {
         jsonObject.put(Fields.user_id.name(), userid);
         jsonObject.put(Fields.message.name(), message);
         jsonObject.put(Fields.channel.name(), channel);
-        jsonObject.put(Fields.signature.name(), signature);
-        jsonObject.put(Fields.public_key.name(), publicKey);
         jsonObject.put(Fields.is_trusted.name(), isTrusted);
         jsonObject.put(Fields.is_own.name(), isOwn);
         return jsonObject;
