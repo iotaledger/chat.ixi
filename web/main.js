@@ -130,6 +130,7 @@ var online_users = {};
 
 function change_channel(new_channel_name) {
 
+    $('#msgs .msg').remove();
     current_channel = CHANNEL_CODES[new_channel_name];
 
     if(channels[current_channel] === undefined)
