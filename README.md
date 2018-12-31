@@ -32,7 +32,7 @@ from the most recent release. Unzip its content into any directory.
 
 ### Step 3: Run CHAT.ixi
 
-```
+```shell
 # move into whatever directory you put your chat.ixi-{VERSION}.jar into
 cd Desktop/chat.ixi/
 
