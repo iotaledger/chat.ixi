@@ -1,5 +1,7 @@
 # CHAT.IXI
 
+<img src="https://cdn-images-1.medium.com/max/2000/1*keoOf8EkZLrue7eLAxjCig.png" />
+
 ## About
 
 **chat.ixi** is an [IXI (IOTA Extension Interface) module](https://github.com/iotaledger/ixi) for the [Iota Controlled Agent (Ict)](https://github.com/iotaledger/ict).
@@ -7,8 +9,6 @@ It extends the functionality of the core Ict client with a chat application whic
 to exchange messages on a permissionless, distributed data-integrity protocol - the Tangle.
 
 CHAT.ixi is described in more detail in this official [IOTA blog post](https://blog.iota.org/chat-ixi-using-ict-for-permissionless-chat-on-the-iota-tangle-59ce6c5b95fb).
-
-<img src="https://cdn-images-1.medium.com/max/2000/1*CxDGQSYolCIYtKNA4_4WcA.png" />
 
 ## Installation
 
@@ -44,7 +44,9 @@ java -jar chat.ixi-{VERSION}.jar {ICT} {USERNAME}
 ### Step 4: Open the Web GUI
 
 Open web/index.html in your web browser. If you are running Ict locally, it should immediately connect you. If no CHAt.ixi
-instance is running on localhost, it will ask you for the address of 
+instance is running on localhost, it will ask you for the ip address of your Ict node.
+
+<img src="https://cdn-images-1.medium.com/max/2000/1*CxDGQSYolCIYtKNA4_4WcA.png" />
 
 ## Disclaimer
 
