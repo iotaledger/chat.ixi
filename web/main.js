@@ -90,6 +90,7 @@ function save_settings() {
 function apply_settings() {
     $('#channels').html("");
     $('#online').html("");
+    $('#msgs').html("");
     init();
 }
 
@@ -330,7 +331,6 @@ function derive_channel_address_from_name(channel_name) {
 
 function init() {
 
-    $('#msgs .msg').remove();
     $('#loading_page').removeClass("hidden");
 
     $.ajax({
@@ -339,9 +339,10 @@ function init() {
         data: [{'name': 'history_size', 'value': settings['history_size']}],
         success: function (initial_channels) {
             initial_channels.sort().forEach(function(channel) { add_channel_internally(channel); });
-            change_channel(initial_channels.includes("speculation") ? "speculation" : initial_channels[0]);
-            if(!initialized)
+            if(!initialized) {
+                change_channel(initial_channels.includes("speculation") ? "speculation" : initial_channels[0]);
                 read_message();
+            }
             initialized = true;
             update_online_users();
             submit_life_sign();
@@ -380,7 +381,7 @@ function ask_for_api_and_connect() {
         settings['api'] = correct_api(text.value);
         set_rest_urls();
         save_settings();
-        init();
+        apply_settings();
     })
 }
 
@@ -452,6 +453,9 @@ function user_id_dialog(callback) {
 
 function add_contact(user_id) {
 
+    $('#msgs').html("");
+
+
     $.ajax({
         url: REST_URL_ADD_CONTACT + user_id,
         success: function(data) {
@@ -472,6 +476,8 @@ function add_contact(user_id) {
 }
 
 function remove_contact(user_id) {
+
+    $('#msgs').html("");
 
     $.ajax({
         url: REST_URL_REMOVE_CONTACT + user_id,
