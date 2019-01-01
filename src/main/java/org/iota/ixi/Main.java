@@ -13,6 +13,6 @@ public class Main {
         properties.ixiEnabled = true;
         new Ict(properties);
 
-        new ChatIxi(properties.name, "anonymous");
+        new ChatIxi(properties.name, "anonymous", "");
     }
 }

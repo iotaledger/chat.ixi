@@ -24,14 +24,14 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
-import static spark.Spark.after;
-import static spark.Spark.get;
+import static spark.Spark.*;
 
 public class ChatIxi extends IxiModule {
 
     private final BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
     private final String username;
     private final String userid;
+    private final String password;
     private final org.iota.ixi.utils.KeyPair keyPair;
     private final Set<String> channelNames;
     private final Set<String> contacts;
@@ -42,12 +42,13 @@ public class ChatIxi extends IxiModule {
     private int historySize = 100;
 
     public static void main(String[] args) {
-        String ictName = args.length >= 2 ? args[0] : "";
-        String username = args.length >= 2 ? args[1] : "";
+        String ictName = args.length >= 3 ? args[0] : "";
+        String username = args.length >= 3 ? args[1] : "";
+        String password = args.length >= 3 ? args[2] : "";
 
         if(args.length == 0) {
             System.err.println("WARNING: No arguments were passed to IXI module.");
-            System.out.println("You can start chat.ixi like this:    java -jar chat.ixi-{VERSION}.jar {ICT_NAME} {USERNAME}");
+            System.out.println("You can start chat.ixi like this:    java -jar chat.ixi-{VERSION}.jar {ICT_NAME} {USERNAME} {PASSWORD}");
             System.out.println();
 
             Scanner scanner = new Scanner(System.in);
@@ -61,10 +62,15 @@ public class ChatIxi extends IxiModule {
             System.out.print("> ");
             username = scanner.nextLine();
             System.out.println();
+
+            System.out.println("Please enter your password:");
+            System.out.print("> ");
+            password = scanner.nextLine();
+            System.out.println();
         }
 
         try {
-            new ChatIxi(ictName, username);
+            new ChatIxi(ictName, username, password);
         } catch (RuntimeException e) {
             if(e.getCause() instanceof NotBoundException) {
                 System.err.println("Failed to connect to Ict: " + e.getMessage());
@@ -80,9 +86,10 @@ public class ChatIxi extends IxiModule {
         }
     }
 
-    public ChatIxi(String ictName, String username) {
+    public ChatIxi(String ictName, String username, String password) {
         super("chat.ixi", ictName);
         this.username = username;
+        this.password = password;
         this.keyPair = KeyManager.loadKeyPair();
         this.userid = Message.generateUserid(keyPair.getPublicAsString());
         this.contacts = loadContacts(CONTACTS_FILE);
@@ -95,12 +102,20 @@ public class ChatIxi extends IxiModule {
 
     public void init() {
 
+        before((Filter) (request, response) -> {
+            String queryPassword = request.queryParams("password");
+
+            if (queryPassword == null || !queryPassword.equals(password)) {
+                halt(401, "Access denied: password incorrect.");
+            }
+        });
+
         after((Filter) (request, response) -> {
             response.header("Access-Control-Allow-Origin", "*");
             response.header("Access-Control-Allow-Methods", "GET");
         });
 
-        get("/init", (request, response) -> {
+        post("/init", (request, response) -> {
             synchronized(this) {
                 try { historySize = Integer.parseInt(request.queryParams("history_size")); } catch (Throwable t) { ; }
                 messages.add(new Message());
@@ -116,19 +131,19 @@ public class ChatIxi extends IxiModule {
             return new JSONArray(channelNames).toString();
         });
 
-        get("/addContact/:userid", (request, response) -> {
+        post("/addContact/:userid", (request, response) -> {
             contacts.add(request.params(":userid"));
             storeContacts();
             return "";
         });
 
-        get("/removeContact/:userid", (request, response) -> {
+        post("/removeContact/:userid", (request, response) -> {
             contacts.remove(request.params(":userid"));
             storeContacts();
             return "";
         });
 
-        get("/removeChannel/", (request, response) -> {
+        post("/removeChannel/", (request, response) -> {
 
             synchronized (this) { // synchronized necessary for correct order of setGossipFilter()
                 String channelName = request.queryParams("name");
@@ -147,7 +162,7 @@ public class ChatIxi extends IxiModule {
             }
         });
 
-        get("/addChannel/", (request, response) -> {
+        post("/addChannel/", (request, response) -> {
             // Due to the delay of setGossipFilter(), it is important to ensure that setGossipFilter() is called in the correct order.
             // Otherwise the newest GossipFilter with N channels might be replaced by an older GossipFilter with L channels (L<N).
             // This would result in missing channels. The synchronized block ensures the correct order.
@@ -165,7 +180,7 @@ public class ChatIxi extends IxiModule {
             }
         });
 
-        get("/getMessage/", (request, response) -> {
+        post("/getMessage/", (request, response) -> {
             JSONArray array = new JSONArray();
             synchronized (messages) {
                 do {
@@ -176,11 +191,11 @@ public class ChatIxi extends IxiModule {
             return array.toString();
         });
 
-        get("/getOnlineUsers", (request, response) -> {
+        post("/getOnlineUsers", (request, response) -> {
             return getOnlineUsers().toString();
         });
 
-        get("/submitMessage/:channel/", (request, response) -> {
+        post("/submitMessage/:channel/", (request, response) -> {
             String channel = request.params(":channel");
             String message = request.queryParams("message");
             submitMessage(channel, message);

@@ -29,7 +29,8 @@ function reset_settings() {
         "hide_strangers": "off",
         "bg_brightness": 30,
         "bg_saturation": 30,
-        "history_size": 100
+        "history_size": 100,
+        "password": ""
     };
 }
 function load_settings() {
@@ -274,7 +275,8 @@ function submit_message(channel, message) {
     $input_loading.removeClass("hidden");
     $.ajax({
         url: REST_URL_SUBMIT+channel+"/",
-        data: [{"name": "message", "value": encode(message)}],
+        method: 'POST',
+        data: [{"name": "message", "value": encode(message)}, {'name': 'password', 'value': settings['password']}],
         success: function (data) { $input_loading.addClass("hidden"); document.getElementById('message').value = "";  },
         error: function (err) { console.log(err); $input_loading.addClass("hidden"); },
     });
@@ -286,7 +288,8 @@ function add_channel(channel_name) {
 
     $.ajax({
         url: REST_URL_ADD_CHANNEL,
-        data: [{"name": "name", "value": channel_name}],
+        method: 'POST',
+        data: [{"name": "name", "value": channel_name}, {'name': 'password', 'value': settings['password']}],
         error: function (err) { console.log(err) }
     });
 }
@@ -304,7 +307,8 @@ function remove_channel(channel_name) {
 
     $.ajax({
         url: REST_URL_REMOVE_CHANNEL,
-        data: [{"name": "name", "value": channel_name}],
+        method: 'POST',
+        data: [{"name": "name", "value": channel_name}, {'name': 'password', 'value': settings['password']}],
         error: function (err) { console.log(err) }
     });
 }
@@ -336,7 +340,8 @@ function init() {
     $.ajax({
         dataType: "json",
         url: REST_URL_INIT,
-        data: [{'name': 'history_size', 'value': settings['history_size']}],
+        method: 'POST',
+        data: [{'name': 'history_size', 'value': settings['history_size']}, {'name': 'password', 'value': settings['password']}],
         success: function (initial_channels) {
             initial_channels.sort().forEach(function(channel) { add_channel_internally(channel); });
             if(!initialized) {
@@ -359,6 +364,8 @@ function init() {
 function read_message() {
     $.ajax({
         dataType: "json",
+        method: 'POST',
+        data: [{'name': 'password', 'value': settings['password']}],
         url: REST_URL_GET,
         success: function (txs) {
             console.log("received " + txs.length);
@@ -380,10 +387,21 @@ function ask_for_api_and_connect() {
     }).then(function (text) {
         settings['api'] = correct_api(text.value);
         set_rest_urls();
+        ask_for_password_and_connect();
+    })
+}
+
+function ask_for_password_and_connect() {
+    swal({
+        title: 'Enter password for API',
+        input: 'password',
+    }).then(function (text) {
+        settings['password'] = text.value;
         save_settings();
         apply_settings();
     })
 }
+
 
 function correct_api(api) {
     if(!api.match(/[:][0-9]{1,5}[/]?$/g))
@@ -411,7 +429,8 @@ function submit_life_sign() {
 
     $.ajax({
         url: REST_URL_SUBMIT+"LIFESIGN".padEnd(81, "9")+"/",
-        data: [{"name": "message", "value":  ""}],
+        method: 'POST',
+        data: [{"name": "message", "value":  ""}, {'name': 'password', 'value': settings['password']}],
         success: function() { last_life_sign = (new Date()-1); set_cookie(cookie_name, last_life_sign + ""); },
         error: function (err) { console.log(err); },
     });
@@ -458,6 +477,8 @@ function add_contact(user_id) {
 
     $.ajax({
         url: REST_URL_ADD_CONTACT + user_id,
+        method: 'POST',
+        data: [{'name': 'password', 'value': settings['password']}],
         success: function(data) {
             for(var channel in channels) {
                 channels[channel].forEach(function (msg) {
@@ -481,6 +502,8 @@ function remove_contact(user_id) {
 
     $.ajax({
         url: REST_URL_REMOVE_CONTACT + user_id,
+        method: 'POST',
+        data: [{'name': 'password', 'value': settings['password']}],
         success: function(data) {
             for(var channel in channels) {
                 channels[channel].forEach(function (msg) {
@@ -503,6 +526,8 @@ function update_online_users() {
         return;
     $.ajax({
         dataType: "json",
+        method: 'POST',
+        data: [{'name': 'password', 'value': settings['password']}],
         url: REST_URL_GET_ONLINE_USERS,
         success: function (data) {
             online_users = data;
