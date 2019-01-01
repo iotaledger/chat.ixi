@@ -46,7 +46,7 @@ public class ChatIxi extends IxiModule {
         String username = args.length >= 3 ? args[1] : "";
         String password = args.length >= 3 ? args[2] : "";
 
-        if(args.length == 0) {
+        if(args.length < 3) {
             System.err.println("WARNING: No arguments were passed to IXI module.");
             System.out.println("You can start chat.ixi like this:    java -jar chat.ixi-{VERSION}.jar {ICT_NAME} {USERNAME} {PASSWORD}");
             System.out.println();
