@@ -178,7 +178,6 @@ public class ChatIxi extends IxiModule {
         List<Transaction> orderedTransactions = new LinkedList<>(transactions);
         Collections.sort(orderedTransactions, (tx1, tx2) -> Long.compare(tx1.issuanceTimestamp, tx2.issuanceTimestamp));
         List<Transaction> elements = orderedTransactions.subList(Math.max(0, orderedTransactions.size() - historySize), orderedTransactions.size());
-        System.out.println(elements.size());
         for(Transaction transaction : elements)
             addTransactionToQueue(transaction);
     }
