@@ -35,20 +35,26 @@ from the most recent release. Unzip its content into any directory.
 You can also build the .jar file from the source code yourself. You will need **Git** and **Gradle**.
 
 ```shell
+# download the source code from github to your local machine
 git clone https://github.com/iotaledger/chat.ixi
+# if you don't have git, you can also do this instead:
+#   wget https://github.com/iotaledger/chat.ixi/archive/master.zip
+#   unzip master.zip
+
+# change into the just created local copy of the repository
 cd chat.ixi
+
+# build the chat.ixi-{VERSION}.jar file
 gradle fatJar
 ```
 
 ### Step 3: Run CHAT.ixi
 
 ```shell
-# move into whatever directory you put your chat.ixi-{VERSION}.jar into
-cd Desktop/chat.ixi/
-
 # Please replace {ICT} with the name of your Ict. You can find it in your ict.cfg file. The default setting is 'ict'.
 # Also replace {USERNAME} with the username you want to appear with in the chat.
-java -jar chat.ixi-{VERSION}.jar {ICT} {USERNAME}
+java -jar chat.ixi-{VERSION}.jar {ICT} {USERNAME}.
+# EXAMPLE: java -jar chat.ixi-1.2.3.jar my_cool_ict SatoshiNakamoto
 ```
 
 ### Step 4: Open the Web GUI
