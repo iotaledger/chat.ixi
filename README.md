@@ -25,10 +25,20 @@ Make sure you are connected to the main network and not to an island, otherwise 
 
 There are two ways to do this:
 
-* **Simple Method:** Go to [releases](https://github.com/iotaledger/chat.ixi/releases) and download the **chat.ixi-{VERSION}.zip**
+#### Simple Method
+
+Go to [releases](https://github.com/iotaledger/chat.ixi/releases) and download the **chat.ixi-{VERSION}.zip**
 from the most recent release. Unzip its content into any directory.
 
-* **Advanced Method:** You can also build the .jar file from the source code yourself. Please find the instructions on [iotaledger/ixi](https://github.com/iotaledger/ixi#step-4-build-your-ixijar). You will need **Gradle**.
+#### Advanced Method
+
+You can also build the .jar file from the source code yourself. You will need **Git** and **Gradle**.
+
+```shell
+git clone https://github.com/iotaledger/chat.ixi
+cd chat.ixi
+gradle fatJar
+```
 
 ### Step 3: Run CHAT.ixi
 
