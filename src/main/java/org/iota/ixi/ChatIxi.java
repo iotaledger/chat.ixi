@@ -18,6 +18,7 @@ import spark.Filter;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.rmi.NotBoundException;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -62,7 +63,21 @@ public class ChatIxi extends IxiModule {
             System.out.println();
         }
 
-        new ChatIxi(ictName, username);
+        try {
+            new ChatIxi(ictName, username);
+        } catch (RuntimeException e) {
+            if(e.getCause() instanceof NotBoundException) {
+                System.err.println("Failed to connect to Ict: " + e.getMessage());
+                System.err.println();
+                System.err.println("Please make sure that:");
+                System.err.println("    - your Ict is running");
+                System.err.println("    - the name of your Ict is '"+ictName+"'");
+                System.err.println("    - you set ixi_enabled=true in your ict.cfg");
+                System.err.println("    - CHAT.ixi runs on the same device as your Ict");
+                System.err.println();
+            }
+            e.printStackTrace();
+        }
     }
 
     public ChatIxi(String ictName, String username) {
