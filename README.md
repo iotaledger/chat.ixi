@@ -52,6 +52,7 @@ gradle fatJar
 
 ```shell
 # Please replace {ICT} with the name of your Ict. You can find it in your ict.cfg file. The default setting is 'ict'.
+# Set 'ixi_enabled=true' in your ict.cfg configuration file.
 # Also replace {USERNAME} with the username you want to appear with in the chat.
 java -jar chat.ixi-{VERSION}.jar {ICT} {USERNAME}.
 # EXAMPLE: java -jar chat.ixi-1.2.3.jar my_cool_ict SatoshiNakamoto
