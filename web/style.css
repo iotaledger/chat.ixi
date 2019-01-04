@@ -95,6 +95,10 @@ body {
     display: inline-block;
 }
 
+#right_row.main_row {
+    overflow-y: scroll;
+}
+
 .main_row button {
     color: #FFF;
     border-radius: 3px;
