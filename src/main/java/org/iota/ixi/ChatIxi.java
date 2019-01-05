@@ -97,7 +97,7 @@ public class ChatIxi extends IxiModule {
         storeChannels();
         contacts.add(userid);
         init();
-        System.out.println("CHAT.ixi is now running on port "+spark.Spark.port()+". Open web/index.html in your web browse to access the chat.");
+        System.out.println("CHAT.ixi is now running on port "+spark.Spark.port()+". Open web/index.html in your web browser to access the chat.");
     }
 
     public void init() {
