@@ -1,4 +1,4 @@
-package org.iota.ixi.utils;
+package org.iota.ict.ixi.utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,8 +36,8 @@ public class KeyManager {
 
     static void storeKeyPairInFiles(KeyPair keyPair) {
         deleteKeyFiles();
-        FileOperations.writeToFile(PUBLIC_KEY_FILE, keyPair.getPublicAsString());
-        FileOperations.writeToFile(PRIVATE_KEY_FILE, keyPair.getPrivateAsString());
+        FileOperations.writeToFile(PUBLIC_KEY_FILE, keyPair.getPublicKeyAsString());
+        FileOperations.writeToFile(PRIVATE_KEY_FILE, keyPair.getPrivateKeyAsString());
     }
 
     static void deleteKeyFiles() {

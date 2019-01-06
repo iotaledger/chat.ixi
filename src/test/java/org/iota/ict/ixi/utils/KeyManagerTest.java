@@ -1,4 +1,4 @@
-package org.iota.ixi.utils;
+package org.iota.ict.ixi.utils;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -21,7 +21,7 @@ public class KeyManagerTest {
         KeyPair original = new KeyPair();
         KeyManager.storeKeyPairInFiles(original);
         String readPublicKeyString = FileOperations.readFromFile(KeyManager.PUBLIC_KEY_FILE);
-        Assert.assertEquals("Key storing failed: stored incorrect string.", original.getPublicAsString(), readPublicKeyString);
+        Assert.assertEquals("Key storing failed: stored incorrect string.", original.getPublicKeyAsString(), readPublicKeyString);
     }
 
     @Test
@@ -29,8 +29,8 @@ public class KeyManagerTest {
         KeyPair original = new KeyPair();
         KeyManager.storeKeyPairInFiles(original);
         KeyPair loaded = KeyManager.loadKeyPair();
-        Assert.assertEquals("Key persistence failed: resulted in different public keys.", original.getPublicAsString(), loaded.getPublicAsString());
-        Assert.assertEquals("Key persistence failed: resulted in different private keys.", original.getPrivateAsString(), loaded.getPrivateAsString());
+        Assert.assertEquals("Key persistence failed: resulted in different public keys.", original.getPublicKeyAsString(), loaded.getPublicKeyAsString());
+        Assert.assertEquals("Key persistence failed: resulted in different private keys.", original.getPrivateKeyAsString(), loaded.getPrivateKeyAsString());
     }
 
     @AfterClass

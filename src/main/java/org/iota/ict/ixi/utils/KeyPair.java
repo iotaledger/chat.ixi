@@ -1,4 +1,4 @@
-package org.iota.ixi.utils;
+package org.iota.ict.ixi.utils;
 
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
@@ -33,7 +33,7 @@ public final class KeyPair {
         privateKey = keyPair.getPrivate();
     }
 
-    public String getPublicAsString() {
+    public String getPublicKeyAsString() {
         try {
             X509EncodedKeySpec spec = KEY_FACTORY.getKeySpec(publicKey, X509EncodedKeySpec.class);
             return Base64.getEncoder().encodeToString(spec.getEncoded());
@@ -42,7 +42,7 @@ public final class KeyPair {
         }
     }
 
-    public String getPrivateAsString() {
+    public String getPrivateKeyAsString() {
         try {
             PKCS8EncodedKeySpec spec = KEY_FACTORY.getKeySpec(privateKey, PKCS8EncodedKeySpec.class);
             byte[] packed = spec.getEncoded();

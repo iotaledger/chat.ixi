@@ -1,12 +1,12 @@
-package org.iota.ixi.model;
+package org.iota.ict.ixi.model;
 
 import com.iota.curl.IotaCurlHash;
 import org.iota.ict.model.Transaction;
 import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.utils.Trytes;
-import org.iota.ixi.ChatIxi;
-import org.iota.ixi.utils.RSA;
-import org.iota.ixi.utils.KeyPair;
+import org.iota.ict.ixi.ChatIxi;
+import org.iota.ict.ixi.utils.RSA;
+import org.iota.ict.ixi.utils.KeyPair;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -56,7 +56,7 @@ public class Message {
         username = builder.username;
         message = builder.message;
         channel = builder.channel;
-        publicKey = builder.keyPair.getPublicAsString();
+        publicKey = builder.keyPair.getPublicKeyAsString();
         userid = generateUserid(publicKey);
         try {
             signature = RSA.sign(getSignedData(), builder.keyPair.privateKey);

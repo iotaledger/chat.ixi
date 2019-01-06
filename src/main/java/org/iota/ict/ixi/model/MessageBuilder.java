@@ -1,6 +1,6 @@
-package org.iota.ixi.model;
+package org.iota.ict.ixi.model;
 
-import org.iota.ixi.utils.KeyPair;
+import org.iota.ict.ixi.utils.KeyPair;
 import org.json.JSONException;
 
 public class MessageBuilder {
