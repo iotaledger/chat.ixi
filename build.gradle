@@ -21,6 +21,7 @@ dependencies {
     compile 'com.github.mikrohash:iota.curl.java:master'
     compile "com.sparkjava:spark-core:2.7.2"
     compile 'org.json:json:20171018'
+    compile 'com.google.guava:guava:27.0.1-jre'
 }
 
 task fatJar(type: Jar) {
