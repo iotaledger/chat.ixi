@@ -104,6 +104,8 @@ public class ChatIxi extends IxiModule {
 
     public void init() {
 
+        staticFiles.externalLocation("web/");
+
         before((Filter) (request, response) -> {
             String queryPassword = request.queryParams("password");
 
