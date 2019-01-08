@@ -1,5 +1,6 @@
 package org.iota.ixi;
 
+import com.iota.curl.IotaCurlHash;
 import org.iota.ict.ixi.IxiModule;
 import org.iota.ict.model.Transaction;
 import org.iota.ict.network.event.GossipFilter;
@@ -22,13 +23,14 @@ import java.rmi.NotBoundException;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
 import static spark.Spark.*;
 
 public class ChatIxi extends IxiModule {
 
-    private final BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
+    private static final HashMap<String, String> channelByAddress = new HashMap<>();
+    private static final HashMap<String, String> addressByChannel = new HashMap<>();
+    final BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
     private final String username;
     private final String userid;
     private final String password;
@@ -169,13 +171,7 @@ public class ChatIxi extends IxiModule {
 
             synchronized (this) { // synchronized necessary for correct order of setGossipFilter()
                 String channelName = request.queryParams("name");
-                channelNames.add(channelName);
-                storeChannels();
-
-                String channelAddress = deriveChannelAddressFromName(channelName);
-                gossipFilter.watchAddress(channelAddress);
-                setGossipFilter(gossipFilter);
-                pullChannelHistory(channelAddress);
+                addChannel(channelName);
                 return "";
             }
         });
@@ -201,6 +197,16 @@ public class ChatIxi extends IxiModule {
             submitMessage(channel, message);
             return "";
         });
+    }
+
+    protected void addChannel(String channelName) {
+        channelNames.add(channelName);
+        storeChannels();
+
+        String channelAddress = deriveChannelAddressFromName(channelName);
+        gossipFilter.watchAddress(channelAddress);
+        setGossipFilter(gossipFilter);
+        pullChannelHistory(channelAddress);
     }
 
     private void pullChannelHistory(String address) {
@@ -239,7 +245,8 @@ public class ChatIxi extends IxiModule {
     private String deriveChannelAddressFromName(String channelName) {
         String trytes = channelName.trim().toUpperCase().replaceAll("[^a-zA-Z0-9]", "");
         assert Trytes.isTrytes(trytes);
-        return Trytes.padRight(trytes.substring(0, Math.min(81, trytes.length())), 81);
+        String padded = Trytes.padRight(trytes.substring(0, Math.min(81, trytes.length())), 81);
+        return getAddressOfChannel(padded);
     }
 
     public static String calcLifeSignTag(long unixMs) {
@@ -248,7 +255,7 @@ public class ChatIxi extends IxiModule {
         return prefix + Trytes.fromNumber(BigInteger.valueOf(minuteIndex), Transaction.Field.TAG.tryteLength - prefix.length());
     }
 
-    private void submitMessage(String channel, String message) {
+    void submitMessage(String channel, String message) {
         Message toSend = createMessage(channel, message);
         Transaction transaction = toSend.toTransaction();
         if(transaction != null)
@@ -275,6 +282,7 @@ public class ChatIxi extends IxiModule {
     }
 
     public void addTransactionToQueue(Transaction transaction) {
+
         try {
             Message message = new Message(transaction, contacts, userid);
             if(message.message.length() > 0)
@@ -336,5 +344,18 @@ public class ChatIxi extends IxiModule {
             throw new RuntimeException("Username length must be 3-20.");
         if(!username.matches("^[A-Za-z0-9\\-._]*$"))
             throw new RuntimeException("Username contains illegal characters.");
+    }
+
+    public static String getChannelOfAddress(String address) {
+        return channelByAddress.containsKey(address) ? channelByAddress.get(address) : Trytes.padRight("", 81);
+    }
+
+    public static String getAddressOfChannel(String channel) {
+        if(addressByChannel.containsKey(channel))
+            return addressByChannel.get(channel);
+        String address = IotaCurlHash.iotaCurlHash(channel, channel.length(), 123).substring(0, 81);
+        addressByChannel.put(channel, address);
+        channelByAddress.put(address, channel);
+        return address;
     }
 }

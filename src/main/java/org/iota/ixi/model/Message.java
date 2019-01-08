@@ -5,11 +5,15 @@ import org.iota.ict.model.Transaction;
 import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.utils.Trytes;
 import org.iota.ixi.ChatIxi;
+import org.iota.ixi.utils.AES;
 import org.iota.ixi.utils.RSA;
 import org.iota.ixi.utils.KeyPair;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.crypto.spec.IvParameterSpec;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Set;
 
 public class Message {
@@ -23,6 +27,17 @@ public class Message {
     public final String publicKey;
     public final boolean isTrusted;
     public final boolean isOwn;
+    public static SecureRandom random;
+    private static final int IV_PARAMETER_SPEC_BYTE_LENGTH = 16;
+    private static final int SEED_LENGTH = IV_PARAMETER_SPEC_BYTE_LENGTH / 2 * 3;
+
+    static {
+        try {
+            random = SecureRandom.getInstanceStrong();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public Message() {
         timestamp = 0;
@@ -36,13 +51,21 @@ public class Message {
         isOwn = false;
     }
 
-    public Message(Transaction transaction, Set<String> contacts, String ownUserid) throws JSONException, RSA.RSAException {
-        final JSONObject jsonObject = new JSONObject(transaction.decodedSignatureFragments);
+    public Message(Transaction transaction, Set<String> contacts, String ownUserid) throws JSONException, AES.AESException, RSA.RSAException {
+
+        channel = ChatIxi.getChannelOfAddress(transaction.address);
+
+        String seed = transaction.decodedSignatureFragments.substring(0, SEED_LENGTH);
+        byte[] bytes = Trytes.toBytes(seed);
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(bytes);
+        String encrypted = transaction.decodedSignatureFragments.substring(SEED_LENGTH);
+        String jsonString = AES.decrypt(encrypted, channel, ivParameterSpec);
+        final JSONObject jsonObject = new JSONObject(jsonString);
+
         timestamp = transaction.issuanceTimestamp;
         username = jsonObject.getString(Fields.username.name());
         ChatIxi.validateUsername(username);
         message = jsonObject.getString(Fields.message.name());
-        channel = transaction.address;
         publicKey = jsonObject.getString(Fields.public_key.name());
         userid = generateUserid(publicKey);
         signature = jsonObject.getString(Fields.signature.name());
@@ -90,21 +113,45 @@ public class Message {
     }
 
     public Transaction toTransaction() {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put(Fields.username.name(), username);
-        jsonObject.put(Fields.message.name(), message);
-        jsonObject.put(Fields.signature.name(), signature);
-        jsonObject.put(Fields.public_key.name(), publicKey);
+        JSONObject unencrypted = new JSONObject();
+        unencrypted.put(Fields.username.name(), username);
+        unencrypted.put(Fields.message.name(), message);
+        unencrypted.put(Fields.signature.name(), signature);
+        unencrypted.put(Fields.public_key.name(), publicKey);
 
-        TransactionBuilder builder = new TransactionBuilder();
-        builder.address = channel;
-        if(jsonObject.toString().length() > Transaction.Field.SIGNATURE_FRAGMENTS.tryteLength / 3 * 2) {
+        if(unencrypted.toString().length() > Transaction.Field.SIGNATURE_FRAGMENTS.tryteLength / 3 * 2) {
             System.err.println("Message to long, doesn't fit into transaction.");
             return null;
         }
-        builder.asciiMessage(jsonObject.toString());
+
+        try {
+            return encryptIntoTransaction(unencrypted, channel);
+        } catch (AES.AESException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static Transaction encryptIntoTransaction(JSONObject unencrypted, String channel) throws AES.AESException {
+
+        TransactionBuilder builder = new TransactionBuilder();
+        builder.address = ChatIxi.getAddressOfChannel(channel);
+
+        String seed = Trytes.randomSequenceOfLength(SEED_LENGTH);
+        byte[] bytes = Trytes.toBytes(seed);
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(bytes);
+        String encrypted = AES.encrypt(unencrypted.toString(), channel, ivParameterSpec);
+        builder.asciiMessage(seed+encrypted);
+
         builder.tag = ChatIxi.calcLifeSignTag(System.currentTimeMillis());
         return builder.build();
+    }
+
+    private static String secureTryteSeed() {
+        char[] seed = new char[SEED_LENGTH];
+        for(int i = 0; i < SEED_LENGTH; i++)
+            seed[i] = Trytes.TRYTES.charAt(random.nextInt());
+        return new String(seed);
     }
 
     private enum Fields {
