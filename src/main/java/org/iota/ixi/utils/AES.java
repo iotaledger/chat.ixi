@@ -10,10 +10,7 @@ import java.util.Base64;
 
 public class AES {
 
-	private static byte[] iv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	private static IvParameterSpec ivspec = new IvParameterSpec(iv);
-
-	public static String encrypt(String plainText, String password) throws AESException {
+	public static String encrypt(String plainText, String password, IvParameterSpec ivspec) throws AESException {
 		try {
 			byte[] p = Hashing.sha256().hashString(password, StandardCharsets.UTF_8).asBytes();
 			SecretKeySpec secretKey = new SecretKeySpec(p, "AES");
@@ -25,7 +22,7 @@ public class AES {
 		}
 	}
 
-	public static String decrypt(String cipherText, String password) throws AESException {
+	public static String decrypt(String cipherText, String password, IvParameterSpec ivspec) throws AESException {
 		try {
 			byte[] p = Hashing.sha256().hashString(password, StandardCharsets.UTF_8).asBytes();
 			SecretKeySpec secretKey = new SecretKeySpec(p, "AES");
