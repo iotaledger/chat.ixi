@@ -6,10 +6,16 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.util.Base64;
 
 public class AES {
+
+    static {
+        Security.setProperty("crypto.policy", "unlimited");
+    }
 
 	public static String encrypt(String plainText, String password, IvParameterSpec iv) throws AESException {
 		try {
