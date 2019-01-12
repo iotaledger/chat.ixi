@@ -1,6 +1,6 @@
-package org.iota.ict.ixi.utils;
+package org.iota.ixi.chat.utils;
 
-import org.iota.ict.ixi.ChatIxi;
+import org.iota.ixi.chat.ChatIxi;
 
 import java.io.File;
 import java.io.IOException;

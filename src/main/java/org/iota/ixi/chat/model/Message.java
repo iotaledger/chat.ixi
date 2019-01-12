@@ -1,13 +1,13 @@
-package org.iota.ict.ixi.model;
+package org.iota.ixi.chat.model;
 
 import com.iota.curl.IotaCurlHash;
 import org.iota.ict.model.Transaction;
 import org.iota.ict.model.TransactionBuilder;
 import org.iota.ict.utils.Trytes;
-import org.iota.ict.ixi.ChatIxi;
-import org.iota.ict.ixi.utils.AES;
-import org.iota.ict.ixi.utils.KeyPair;
-import org.iota.ict.ixi.utils.RSA;
+import org.iota.ixi.chat.ChatIxi;
+import org.iota.ixi.chat.utils.AES;
+import org.iota.ixi.chat.utils.KeyPair;
+import org.iota.ixi.chat.utils.RSA;
 import org.json.JSONException;
 import org.json.JSONObject;
 

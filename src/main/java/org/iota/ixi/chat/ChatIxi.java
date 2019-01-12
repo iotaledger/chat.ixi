@@ -1,12 +1,14 @@
-package org.iota.ict.ixi;
+package org.iota.ixi.chat;
 
 import com.iota.curl.IotaCurlHash;
-import org.iota.ict.ixi.model.Credentials;
-import org.iota.ict.ixi.model.Message;
-import org.iota.ict.ixi.model.MessageBuilder;
-import org.iota.ict.ixi.utils.FileOperations;
-import org.iota.ict.ixi.utils.KeyManager;
-import org.iota.ict.ixi.utils.KeyPair;
+import org.iota.ict.ixi.Ixi;
+import org.iota.ict.ixi.IxiModule;
+import org.iota.ixi.chat.model.Credentials;
+import org.iota.ixi.chat.model.Message;
+import org.iota.ixi.chat.model.MessageBuilder;
+import org.iota.ixi.chat.utils.FileOperations;
+import org.iota.ixi.chat.utils.KeyManager;
+import org.iota.ixi.chat.utils.KeyPair;
 import org.iota.ict.model.Transaction;
 import org.iota.ict.network.event.GossipEvent;
 import org.iota.ict.network.event.GossipFilter;
@@ -19,9 +21,6 @@ import spark.Service;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

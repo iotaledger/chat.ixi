@@ -1,4 +1,4 @@
-package org.iota.ict.ixi.utils;
+package org.iota.ixi.chat.utils;
 
 import org.junit.Assert;
 import org.junit.Test;

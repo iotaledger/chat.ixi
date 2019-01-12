@@ -1,4 +1,4 @@
-package org.iota.ict.ixi.model;
+package org.iota.ixi.chat.model;
 
 public class Credentials {
 
