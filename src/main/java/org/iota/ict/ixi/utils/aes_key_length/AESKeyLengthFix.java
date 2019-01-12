@@ -1,4 +1,4 @@
-package org.iota.ixi.utils.aes_key_length;
+package org.iota.ict.ixi.utils.aes_key_length;
 
 import javax.crypto.Cipher;
 import java.lang.reflect.Constructor;

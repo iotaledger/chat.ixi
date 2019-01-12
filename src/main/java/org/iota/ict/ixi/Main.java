@@ -1,4 +1,4 @@
-package org.iota.ixi;
+package org.iota.ict.ixi;
 
 import org.iota.ict.Ict;
 import org.iota.ict.utils.Properties;
@@ -9,10 +9,9 @@ import org.iota.ict.utils.Properties;
 public class Main {
 
     public static void main(String[] args) {
-        Properties properties = new Properties();
-        properties.ixiEnabled = true;
-        new Ict(properties);
 
-        new ChatIxi(properties.name, "anonymous", "x");
+        new ChatIxi(new IctProxy(new Ict(new Properties()))).run();
+
     }
+
 }

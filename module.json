@@ -1,0 +1,8 @@
+{
+  "name": "CHAT.ixi",
+  "main_class": "org.iota.ict.ixi.ChatIxi",
+  "description": "This IXI module prints every transaction message to the console. Submits a 'Hello World!' message on start.",
+  "repository": "iotaledger/chat.ixi",
+  "web_gui": false,
+  "supported_versions": ["0.4-SNAPSHOT"]
+}

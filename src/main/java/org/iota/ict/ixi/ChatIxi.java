@@ -1,25 +1,26 @@
-package org.iota.ixi;
+package org.iota.ict.ixi;
 
 import com.iota.curl.IotaCurlHash;
-import org.iota.ict.ixi.IxiModule;
+import org.iota.ict.ixi.model.Credentials;
+import org.iota.ict.ixi.model.Message;
+import org.iota.ict.ixi.model.MessageBuilder;
+import org.iota.ict.ixi.utils.FileOperations;
+import org.iota.ict.ixi.utils.KeyManager;
+import org.iota.ict.ixi.utils.KeyPair;
 import org.iota.ict.model.Transaction;
+import org.iota.ict.network.event.GossipEvent;
 import org.iota.ict.network.event.GossipFilter;
-import org.iota.ict.network.event.GossipReceiveEvent;
-import org.iota.ict.network.event.GossipSubmitEvent;
-import org.iota.ict.utils.Properties;
+import org.iota.ict.network.event.GossipListener;
 import org.iota.ict.utils.Trytes;
-import org.iota.ixi.model.Message;
-import org.iota.ixi.model.MessageBuilder;
-import org.iota.ixi.utils.FileOperations;
-import org.iota.ixi.utils.KeyManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import spark.Filter;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
-import java.rmi.NotBoundException;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -31,85 +32,52 @@ public class ChatIxi extends IxiModule {
     private static final HashMap<String, String> channelByAddress = new HashMap<>();
     private static final HashMap<String, String> addressByChannel = new HashMap<>();
     final BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
-    private final String username;
+
     private final String userid;
-    private final String password;
-    private final org.iota.ixi.utils.KeyPair keyPair;
+    private final Credentials credentials;
+    private final KeyPair keyPair;
     private final Set<String> channelNames;
     private final Set<String> contacts;
     private GossipFilter gossipFilter = new GossipFilter();
 
     private static final java.io.File CHANNELS_FILE = new java.io.File("channels.txt");
     private static final java.io.File CONTACTS_FILE = new java.io.File("contacts.txt");
+    private static final java.io.File CONFIG_FILE = new java.io.File("chat.cfg");
+
     private int historySize = 100;
 
-    public static void main(String[] args) {
-        String ictName = args.length >= 3 ? args[0] : "";
-        String username = args.length >= 3 ? args[1] : "";
-        String password = args.length >= 3 ? args[2] : "";
+    public ChatIxi(Ixi ixi) {
 
-        if(args.length < 3) {
-            System.err.println("WARNING: No arguments were passed to IXI module.");
-            System.out.println("You can start chat.ixi like this:    java -jar chat.ixi-{VERSION}.jar {ICT_NAME} {USERNAME} {PASSWORD}");
-            System.out.println();
+        super(ixi);
 
-            Scanner scanner = new Scanner(System.in);
-
-            System.out.println("Please enter the name of your ICT (Default = "+ (new Properties()).name +")");
-            System.out.print("> ");
-            ictName = scanner.nextLine();
-            System.out.println();
-
-            System.out.println("Please enter your username:");
-            System.out.print("> ");
-            username = scanner.nextLine();
-            System.out.println();
-
-            System.out.println("Please enter your password:");
-            System.out.print("> ");
-            password = scanner.nextLine();
-            System.out.println();
-        }
-
-        try {
-            new ChatIxi(ictName, username, password);
-        } catch (RuntimeException e) {
-            if(e.getCause() instanceof NotBoundException) {
-                System.err.println("Failed to connect to Ict: " + e.getMessage());
-                System.err.println();
-                System.err.println("Please make sure that:");
-                System.err.println("    - your Ict is running");
-                System.err.println("    - the name of your Ict is '"+ictName+"'");
-                System.err.println("    - you set ixi_enabled=true in your ict.cfg");
-                System.err.println("    - CHAT.ixi runs on the same device as your Ict");
-                System.err.println();
-            }
-            e.printStackTrace();
-        }
-    }
-
-    public ChatIxi(String ictName, String username, String password) {
-        super("chat.ixi", ictName);
-        this.username = username;
-        this.password = password;
         this.keyPair = KeyManager.loadKeyPair();
-        this.userid = Message.generateUserid(keyPair.getPublicAsString());
+        this.userid = Message.generateUserid(keyPair.getPublicKeyAsString());
         this.contacts = loadContacts(CONTACTS_FILE);
         this.channelNames = loadChannels(CHANNELS_FILE);
+        this.credentials = loadCredentials();
+
         storeChannels();
         contacts.add(userid);
-        init();
-        System.out.println("CHAT.ixi is now running on port "+spark.Spark.port()+". Open web/index.html in your web browser to access the chat.");
+
+        ixi.addGossipListener(new GossipListener() {
+            @Override
+            public void onGossipEvent(GossipEvent event) {
+                if(gossipFilter.passes(event.getTransaction()))
+                    addTransactionToQueue(event.getTransaction());
+            }
+        });
+
     }
 
-    public void init() {
+    @Override
+    public void run() {
 
         staticFiles.externalLocation("web/");
 
         before((Filter) (request, response) -> {
             String queryPassword = request.queryParams("password");
 
-            if (queryPassword == null || !queryPassword.equals(password)) {
+            if (queryPassword == null || !queryPassword.equals(credentials.getPassword())) {
                 halt(401, "Access denied: password incorrect.");
             }
         });
@@ -128,7 +96,6 @@ public class ChatIxi extends IxiModule {
                     gossipFilter.watchAddress(channelAddress);
                     pullChannelHistory(channelAddress);
                 }
-                setGossipFilter(gossipFilter);
             }
             // delay web app so that multiple messages are already queued and can be submitted bundled once web app requests messages
             Thread.sleep(100);
@@ -161,7 +128,6 @@ public class ChatIxi extends IxiModule {
                 storeChannels();
 
                 gossipFilter.unwatchAddress(channelAddress);
-                setGossipFilter(gossipFilter);
                 return "";
             }
         });
@@ -199,6 +165,9 @@ public class ChatIxi extends IxiModule {
             submitMessage(channel, message);
             return "";
         });
+
+        System.out.println("CHAT.ixi is now running on port "+spark.Spark.port()+". Open web/index.html in your web browser to access the chat.");
+
     }
 
     protected void addChannel(String channelName) {
@@ -207,12 +176,11 @@ public class ChatIxi extends IxiModule {
 
         String channelAddress = deriveChannelAddressFromName(channelName);
         gossipFilter.watchAddress(channelAddress);
-        setGossipFilter(gossipFilter);
         pullChannelHistory(channelAddress);
     }
 
     private void pullChannelHistory(String address) {
-        Set<Transaction> transactions = findTransactionsByAddress(address);
+        Set<Transaction> transactions = ixi.findTransactionsByAddress(address);
         List<Transaction> orderedTransactions = new LinkedList<>(transactions);
         Collections.sort(orderedTransactions, (tx1, tx2) -> Long.compare(tx1.issuanceTimestamp, tx2.issuanceTimestamp));
         List<Transaction> elements = orderedTransactions.subList(Math.max(0, orderedTransactions.size() - historySize), orderedTransactions.size());
@@ -224,7 +192,7 @@ public class ChatIxi extends IxiModule {
         Set<Transaction> recentLifeSigns = new HashSet<>();
         for(int i = 0; i < 30; i++) {
             String lifeSignTag = calcLifeSignTag(System.currentTimeMillis()-120000*i);
-            recentLifeSigns.addAll(findTransactionsByTag(lifeSignTag));
+            recentLifeSigns.addAll(ixi.findTransactionsByTag(lifeSignTag));
         }
 
         JSONObject onlineUsers = new JSONObject();
@@ -261,26 +229,16 @@ public class ChatIxi extends IxiModule {
         Message toSend = createMessage(channel, message);
         Transaction transaction = toSend.toTransaction();
         if(transaction != null)
-            submit(transaction);
+            ixi.submit(transaction);
     }
 
     private Message createMessage(String channel, String message) {
         MessageBuilder builder = new MessageBuilder();
         builder.keyPair = keyPair;
-        builder.username = username;
+        builder.username = credentials.getUsername();
         builder.message = message;
         builder.channel = channel;
         return builder.build();
-    }
-
-    @Override
-    public void onTransactionReceived(GossipReceiveEvent event) {
-        addTransactionToQueue(event.getTransaction());
-    }
-
-    @Override
-    public void onTransactionSubmitted(GossipSubmitEvent event) {
-        addTransactionToQueue(event.getTransaction());
     }
 
     public void addTransactionToQueue(Transaction transaction) {
@@ -360,4 +318,27 @@ public class ChatIxi extends IxiModule {
         channelByAddress.put(address, channel);
         return address;
     }
+
+    private Credentials loadCredentials() {
+        java.util.Properties p = new java.util.Properties();
+        InputStream input = null;
+        try {
+            if(!CONFIG_FILE.exists())
+                throw new RuntimeException(CONFIG_FILE.getAbsolutePath() + ": " +"config file not found");
+            input = new FileInputStream(CONFIG_FILE.getName());
+            p.load(input);
+            String username = p.getProperty("username");
+            String password = p.getProperty("password");
+            if(username == null || username.length() == 0)
+                throw new RuntimeException(CONFIG_FILE.getAbsolutePath() + ": " +"username not set");
+            if(password == null || password.length() == 0)
+                throw new RuntimeException(CONFIG_FILE.getAbsolutePath() + ": " +"password not set");
+            return new Credentials(username, password);
+        } catch (Throwable t) {
+            throw new RuntimeException(t.getMessage());
+        } finally {
+            try { input.close(); } catch(Throwable t) { ; }
+        }
+    }
+
 }
