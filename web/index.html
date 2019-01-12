@@ -35,7 +35,7 @@
             <div id="msgs"></div>
         </div>
         <div id="input">
-            <textarea maxlength="580" id="message" spellcheck="false" onkeypress="if ((event.keyCode ? event.keyCode : event.which) == 13 && !event.shiftKey) { const $this = $(this); const value = $this.val(); submit(); setTimeout(function () { $this.val(value) }, 1);}"></textarea>
+            <textarea maxlength="250" id="message" spellcheck="false" onkeypress="if ((event.keyCode ? event.keyCode : event.which) == 13 && !event.shiftKey) { const $this = $(this); const value = $this.val(); submit(); setTimeout(function () { $this.val(value) }, 1);}"></textarea>
             <input type="button" id="submit" value="submit" onclick="submit()">
         </div>
         <div id="input_loading" class="hidden">
@@ -60,10 +60,6 @@
     <table>
         <tr>
             <th>Content</th>
-        </tr>
-        <tr>
-            <td>chat.ixi API</td>
-            <td><input id="settings_api" type="url" placeholder="http://localhost:4567" /></td>
         </tr>
         <tr>
             <td>API password</td>

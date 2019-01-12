@@ -15,6 +15,7 @@ var REST_URL_ADD_CONTACT;
 var REST_URL_REMOVE_CONTACT;
 var REST_URL_GET_ONLINE_USERS;
 var REST_URL_INIT;
+set_rest_urls();
 
 const icons = {};
 const audio = new Audio('sound.ogg');
@@ -25,7 +26,6 @@ setInterval(submit_life_sign, 10000);
 
 function reset_settings() {
     settings  = {
-        "api": "http://localhost:4567/",
         "hide_strangers": "off",
         "bg_brightness": 30,
         "bg_saturation": 30,
@@ -43,13 +43,12 @@ function load_settings() {
         }
     });
 
-    settings['api'] = correct_api(settings['api']);
     settings['history_size'] = parseInt(settings['history_size']);
-    set_rest_urls();
+    //set_rest_urls();
 }
 
 function set_rest_urls() {
-    REST_URL = settings['api'];
+    REST_URL = window.location.protocol + "//" + window.location.host + "/";
     REST_URL_GET = REST_URL+"getMessage/";
     REST_URL_SUBMIT = REST_URL+"submitMessage/";
     REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
@@ -209,7 +208,8 @@ function show_message(tx) {
         .text(username + "@" + user_id.substr(0, 8)))
         .append(" at " + time);
 
-    const urlRegex = /((https?:\/\/|www.)(www.)?[^ ]*)/gim;
+
+    const urlRegex = /((https?:\/\/|www.)(www.)?[^ "']*)/gim;
 
     const msg = emoji.replace_colons(decode(message).split("&").join("&amp;").split("<").join("&lt;").split(">").join("&gt;"))
         .replace(/[\n]/g, "<br/>")
@@ -355,8 +355,8 @@ function init() {
         },
         error: function (err) {
             $('#loading_page').addClass("hidden");
-            const msg = "Could not connect to <code>" + settings['api'] + "</code><br/><br/>"+JSON.stringify(err) + "</b><br/><br/><hr/>Required format: <code>http://{IP}:4567</code>/, e.g. <code>http://localhost:4567/</code>";
-            swal("Failed to connecto to API", msg, "warning").then(ask_for_api_and_connect);
+            const msg = "Could not connect to <code>" + REST_URL + "</code><br/><br/>"+JSON.stringify(err) + "</b><br/><br/>Maybe you got the password wrong? Let's try again.";
+            swal("Failed to connecto to API", msg, "warning").then(ask_for_password_and_connect);
         }
     });
 }
@@ -380,16 +380,6 @@ function read_message() {
     });
 }
 
-function ask_for_api_and_connect() {
-    swal({
-        title: 'Enter chat.ixi API',
-        input: 'text',
-    }).then(function (text) {
-        settings['api'] = correct_api(text.value);
-        set_rest_urls();
-        ask_for_password_and_connect();
-    })
-}
 
 function ask_for_password_and_connect() {
     swal({
@@ -402,17 +392,6 @@ function ask_for_password_and_connect() {
     })
 }
 
-
-function correct_api(api) {
-    if(!api.match(/[:][0-9]{1,5}[/]?$/g))
-        api += ":4567/";
-    if(!api.endsWith("/"))
-        api += "/";
-    if(!api.startsWith("http"))
-        api = "http://" + api;
-    return api;
-
-}
 
 function submit_life_sign() {
 
