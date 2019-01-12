@@ -7,8 +7,8 @@ import java.io.IOException;
 
 public class KeyManager {
 
-    static File PUBLIC_KEY_FILE = new File(ChatIxi.DIRECTORY + "/public.key");
-    static File PRIVATE_KEY_FILE = new File(ChatIxi.DIRECTORY + "/private.key");
+    static final File PUBLIC_KEY_FILE = new File(ChatIxi.DIRECTORY, "public.key");
+    static final File PRIVATE_KEY_FILE = new File(ChatIxi.DIRECTORY, "private.key");
 
     public static KeyPair loadKeyPair() {
         try {
@@ -38,6 +38,13 @@ public class KeyManager {
 
     static void storeKeyPairInFiles(KeyPair keyPair) {
         deleteKeyFiles();
+        try {
+            PUBLIC_KEY_FILE.getParentFile().mkdirs();
+            PUBLIC_KEY_FILE.createNewFile();
+            PRIVATE_KEY_FILE.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         FileOperations.writeToFile(PUBLIC_KEY_FILE, keyPair.getPublicKeyAsString());
         FileOperations.writeToFile(PRIVATE_KEY_FILE, keyPair.getPrivateKeyAsString());
     }

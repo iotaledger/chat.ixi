@@ -15,12 +15,13 @@ import org.iota.ict.utils.Trytes;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import spark.Filter;
+import spark.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigInteger;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -39,16 +40,13 @@ public class ChatIxi extends IxiModule {
     private final Set<String> channelNames;
     private final Set<String> contacts;
     private GossipFilter gossipFilter = new GossipFilter();
+    private Service service = Service.ignite();
 
-    public static final java.io.File DIRECTORY = new java.io.File("modules/chat.ixi");
-    private static final java.io.File CHANNELS_FILE = new java.io.File(DIRECTORY + "/channels.txt");
-    private static final java.io.File CONTACTS_FILE = new java.io.File(DIRECTORY + "/contacts.txt");
-    private static final java.io.File CONFIG_FILE = new java.io.File(DIRECTORY + "/chat.cfg");
-
-    static {
-        if(!DIRECTORY.exists())
-            DIRECTORY.mkdirs();
-    }
+    public static final java.io.File DIRECTORY = new java.io.File("modules/chat.ixi/");
+    private static final java.io.File CHANNELS_FILE = new java.io.File(DIRECTORY, "channels.txt");
+    private static final java.io.File CONTACTS_FILE = new java.io.File(DIRECTORY, "contacts.txt");
+    private static final java.io.File CONFIG_FILE = new java.io.File(DIRECTORY, "chat.cfg");
+    private static final java.io.File WEB_DIRECTORY = new java.io.File(DIRECTORY, "web/");
 
     private int historySize = 100;
 
@@ -78,22 +76,34 @@ public class ChatIxi extends IxiModule {
     @Override
     public void run() {
 
-        staticFiles.externalLocation("web/");
+        try {
+            if(!DIRECTORY.exists())
+                DIRECTORY.mkdirs();
+            if (!WEB_DIRECTORY.exists())
+                extractWebDirectory();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        before((Filter) (request, response) -> {
-            String queryPassword = request.queryParams("password");
+        service.staticFiles.externalLocation(WEB_DIRECTORY.getAbsolutePath());
 
-            if (queryPassword == null || !queryPassword.equals(credentials.getPassword())) {
-                halt(401, "Access denied: password incorrect.");
+        service.port(2019);
+
+        service.before((Filter) (request, response) -> {
+            if(request.requestMethod().toLowerCase().equals("post")) {
+                String queryPassword = request.queryParams("password");
+                if (queryPassword == null || !queryPassword.equals(credentials.getPassword())) {
+                    halt(401, "Access denied: password incorrect.");
+                }
             }
         });
 
-        after((Filter) (request, response) -> {
+        service.after((Filter) (request, response) -> {
             response.header("Access-Control-Allow-Origin", "*");
             response.header("Access-Control-Allow-Methods", "GET");
         });
 
-        post("/init", (request, response) -> {
+        service.post("/init", (request, response) -> {
             synchronized(this) {
                 try { historySize = Integer.parseInt(request.queryParams("history_size")); } catch (Throwable t) { ; }
                 messages.add(new Message());
@@ -108,19 +118,19 @@ public class ChatIxi extends IxiModule {
             return new JSONArray(channelNames).toString();
         });
 
-        post("/addContact/:userid", (request, response) -> {
+        service.post("/addContact/:userid", (request, response) -> {
             contacts.add(request.params(":userid"));
             storeContacts();
             return "";
         });
 
-        post("/removeContact/:userid", (request, response) -> {
+        service.post("/removeContact/:userid", (request, response) -> {
             contacts.remove(request.params(":userid"));
             storeContacts();
             return "";
         });
 
-        post("/removeChannel/", (request, response) -> {
+        service.post("/removeChannel/", (request, response) -> {
 
             synchronized (this) { // synchronized necessary for correct order of setGossipFilter()
                 String channelName = request.queryParams("name");
@@ -138,7 +148,7 @@ public class ChatIxi extends IxiModule {
             }
         });
 
-        post("/addChannel/", (request, response) -> {
+        service.post("/addChannel/", (request, response) -> {
             // Due to the delay of setGossipFilter(), it is important to ensure that setGossipFilter() is called in the correct order.
             // Otherwise the newest GossipFilter with N channels might be replaced by an older GossipFilter with L channels (L<N).
             // This would result in missing channels. The synchronized block ensures the correct order.
@@ -150,7 +160,7 @@ public class ChatIxi extends IxiModule {
             }
         });
 
-        post("/getMessage/", (request, response) -> {
+        service.post("/getMessage/", (request, response) -> {
             JSONArray array = new JSONArray();
             synchronized (messages) {
                 do {
@@ -161,18 +171,18 @@ public class ChatIxi extends IxiModule {
             return array.toString();
         });
 
-        post("/getOnlineUsers", (request, response) -> {
+        service.post("/getOnlineUsers", (request, response) -> {
             return getOnlineUsers().toString();
         });
 
-        post("/submitMessage/:channel/", (request, response) -> {
+        service.post("/submitMessage/:channel/", (request, response) -> {
             String channel = request.params(":channel");
             String message = request.queryParams("message");
             submitMessage(channel, message);
             return "";
         });
 
-        System.out.println("CHAT.ixi is now running on port "+spark.Spark.port()+". Open web/index.html in your web browser to access the chat.");
+        System.out.println("CHAT.ixi is now running on port "+service.port()+". Open it in your web browser to access the chat.");
 
     }
 
@@ -326,20 +336,27 @@ public class ChatIxi extends IxiModule {
     }
 
     private Credentials loadCredentials() {
-        java.util.Properties p = new java.util.Properties();
+        Properties properties = loadPropertes();
+        String username = properties.getProperty("username");
+        String password = properties.getProperty("password");
+        if(username == null || username.length() == 0)
+            throw new RuntimeException("username not set in " + CONFIG_FILE.getAbsolutePath());
+        if(password == null || password.length() == 0)
+            throw new RuntimeException("password not set in " + CONFIG_FILE.getAbsolutePath());
+        return new Credentials(username, password);
+    }
+
+    private Properties loadPropertes() {
+
+        if(!CONFIG_FILE.exists())
+            return createAndStoreProperties();
+
+        Properties properties = new Properties();
         InputStream input = null;
         try {
-            if(!CONFIG_FILE.exists())
-                throw new RuntimeException(CONFIG_FILE.getAbsolutePath() + ": " +"config file not found");
             input = new FileInputStream(CONFIG_FILE);
-            p.load(input);
-            String username = p.getProperty("username");
-            String password = p.getProperty("password");
-            if(username == null || username.length() == 0)
-                throw new RuntimeException(CONFIG_FILE.getAbsolutePath() + ": " +"username not set");
-            if(password == null || password.length() == 0)
-                throw new RuntimeException(CONFIG_FILE.getAbsolutePath() + ": " +"password not set");
-            return new Credentials(username, password);
+            properties.load(input);
+            return properties;
         } catch (Throwable t) {
             throw new RuntimeException(t.getMessage());
         } finally {
@@ -347,4 +364,49 @@ public class ChatIxi extends IxiModule {
         }
     }
 
+    /**
+     * CREDITS: https://stackoverflow.com/questions/1529611/how-to-write-a-java-program-which-can-extract-a-jar-file-and-store-its-data-in-s/1529707#1529707
+     * */
+    private void extractWebDirectory() throws IOException {
+        File jarFile = new File(ChatIxi.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+        java.util.jar.JarFile jar = new java.util.jar.JarFile(jarFile);
+        java.util.Enumeration enumEntries = jar.entries();
+        while (enumEntries.hasMoreElements()) {
+            java.util.jar.JarEntry file = (java.util.jar.JarEntry) enumEntries.nextElement();
+            if(!file.getName().startsWith("web/"))
+                continue;
+            System.err.println(" EXTRACTING " + file.getName() + " ...");
+            java.io.File f = new java.io.File(DIRECTORY + java.io.File.separator + file.getName());
+            if (file.isDirectory()) {
+                f.mkdirs();
+                continue;
+            }
+            f.createNewFile();
+            java.io.InputStream is = jar.getInputStream(file); // get the input stream
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(f);
+            while (is.available() > 0) {
+                fos.write(is.read());
+            }
+            fos.close();
+            is.close();
+        }
+        jar.close();
+    }
+
+    private Properties createAndStoreProperties() {
+        java.util.Properties properties = new java.util.Properties();
+        properties.setProperty("username", "anonymous");
+        properties.setProperty("password", "password");
+        try {
+            OutputStream out = new FileOutputStream(CONFIG_FILE);
+            properties.store(out, "");
+            return properties;
+        } catch (IOException e) { throw new RuntimeException(e); }
+    }
+
+    @Override
+    public void terminate() {
+        service.stop();
+        super.terminate();
+    }
 }
