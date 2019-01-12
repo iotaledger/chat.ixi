@@ -26,7 +26,7 @@ dependencies {
 }
 
 task ixi(type: Jar) {
-    archiveName = 'ixi.jar'
+    baseName = 'chat'
     destinationDir = file("$rootDir")
     from("./") { include 'module.json' }
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
