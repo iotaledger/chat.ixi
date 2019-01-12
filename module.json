@@ -1,7 +1,7 @@
 {
   "name": "CHAT.ixi",
   "main_class": "org.iota.ict.ixi.ChatIxi",
-  "description": "This IXI module prints every transaction message to the console. Submits a 'Hello World!' message on start.",
+  "description": "This IXI module allows users in the Ict network to exchange messages on a permissionless, distributed data-integrity protocol - the Tangle.",
   "repository": "iotaledger/chat.ixi",
   "web_gui": false,
   "supported_versions": ["0.4-SNAPSHOT"]
