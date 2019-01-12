@@ -1,12 +1,14 @@
 package org.iota.ict.ixi.utils;
 
+import org.iota.ict.ixi.ChatIxi;
+
 import java.io.File;
 import java.io.IOException;
 
 public class KeyManager {
 
-    static File PUBLIC_KEY_FILE = new File("public.key");
-    static File PRIVATE_KEY_FILE = new File("private.key");
+    static File PUBLIC_KEY_FILE = new File(ChatIxi.DIRECTORY + "/public.key");
+    static File PRIVATE_KEY_FILE = new File(ChatIxi.DIRECTORY + "/private.key");
 
     public static KeyPair loadKeyPair() {
         try {

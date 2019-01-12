@@ -40,9 +40,15 @@ public class ChatIxi extends IxiModule {
     private final Set<String> contacts;
     private GossipFilter gossipFilter = new GossipFilter();
 
-    private static final java.io.File CHANNELS_FILE = new java.io.File("channels.txt");
-    private static final java.io.File CONTACTS_FILE = new java.io.File("contacts.txt");
-    private static final java.io.File CONFIG_FILE = new java.io.File("chat.cfg");
+    public static final java.io.File DIRECTORY = new java.io.File("modules/chat.ixi");
+    private static final java.io.File CHANNELS_FILE = new java.io.File(DIRECTORY + "/channels.txt");
+    private static final java.io.File CONTACTS_FILE = new java.io.File(DIRECTORY + "/contacts.txt");
+    private static final java.io.File CONFIG_FILE = new java.io.File(DIRECTORY + "/chat.cfg");
+
+    static {
+        if(!DIRECTORY.exists())
+            DIRECTORY.mkdirs();
+    }
 
     private int historySize = 100;
 
@@ -325,7 +331,7 @@ public class ChatIxi extends IxiModule {
         try {
             if(!CONFIG_FILE.exists())
                 throw new RuntimeException(CONFIG_FILE.getAbsolutePath() + ": " +"config file not found");
-            input = new FileInputStream(CONFIG_FILE.getName());
+            input = new FileInputStream(CONFIG_FILE);
             p.load(input);
             String username = p.getProperty("username");
             String password = p.getProperty("password");
