@@ -14,6 +14,7 @@ import org.iota.ict.network.event.GossipEvent;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipListener;
 import org.iota.ict.utils.Trytes;
+import org.iota.ixi.chat.utils.aes_key_length.AESKeyLengthFix;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import spark.Filter;
@@ -48,6 +49,10 @@ public class ChatIxi extends IxiModule {
     private static final java.io.File WEB_DIRECTORY = new java.io.File(DIRECTORY, "web/");
 
     private int historySize = 100;
+
+    static {
+        AESKeyLengthFix.apply();
+    }
 
     public ChatIxi(Ixi ixi) {
 

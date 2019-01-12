@@ -10,7 +10,7 @@ public class AESKeyLengthFix {
 
     // https://github.com/Delthas/JavaSkype/commit/c329dc06c28b0b2a6f2b6c05cc08bad1e0cdf9c8
 
-    static {
+    public static void apply() {
 
         // ugly piece of code to bypass Oracle JRE stupid restriction on key lengths
         // Skype requires a 256-bit key AES cipher, but Oracle will only allow a key length <= 128-bit due to US export laws

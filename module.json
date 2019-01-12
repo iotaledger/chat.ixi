@@ -5,5 +5,5 @@
   "description": "This IXI module allows users in the Ict network to exchange messages on a permissionless, distributed data-integrity protocol - the Tangle.",
   "repository": "iotaledger/chat.ixi",
   "gui_port": 2019,
-  "supported_versions": ["0.4"]
+  "supported_versions": ["0.4", "0.4-SNAPSHOT"]
 }
