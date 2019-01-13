@@ -70,7 +70,7 @@ password={PASSWORD}
 ### Step 5: Run Ict
 
 ```shell
-# switch back to Ict folder
+# switch back to Ict folder where Ict .jar is located
 cd ../../ict
 
 # run Ict
