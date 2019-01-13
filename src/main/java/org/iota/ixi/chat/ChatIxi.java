@@ -370,7 +370,7 @@ public class ChatIxi extends IxiModule {
     private Properties createAndStoreProperties() {
         java.util.Properties properties = new java.util.Properties();
         properties.setProperty("username", "Anonymous");
-        properties.setProperty("password", PasswordGenerator.randomString(20));
+        properties.setProperty("password", PasswordGenerator.random());
         try {
             OutputStream out = new FileOutputStream(CONFIG_FILE);
             properties.store(out, "");
