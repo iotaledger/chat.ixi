@@ -110,19 +110,24 @@ public class ChatIxi extends IxiModule {
             response.header("Access-Control-Allow-Methods", "GET");
         });
 
-        service.post("/init", (request, response) -> {
-            synchronized(this) {
-                try { historySize = Integer.parseInt(request.queryParams("history_size")); } catch (Throwable t) { ; }
-                messages.add(new Message());
-                for(String channel : channelNames) {
-                    String channelAddress = deriveChannelAddressFromName(channel);
-                    gossipFilter.watchAddress(channelAddress);
-                    pullChannelHistory(channelAddress);
+        service.post("/init/", (request, response) -> {
+            try {
+                synchronized(this) {
+                    try { historySize = Integer.parseInt(request.queryParams("history_size")); } catch (Throwable t) { ; }
+                    messages.add(new Message());
+                    for(String channel : channelNames) {
+                        String channelAddress = deriveChannelAddressFromName(channel);
+                        gossipFilter.watchAddress(channelAddress);
+                        pullChannelHistory(channelAddress);
+                    }
                 }
+                // delay web app so that multiple messages are already queued and can be submitted bundled once web app requests messages
+                Thread.sleep(100);
+                return new JSONArray(channelNames).toString();
+            } catch (Throwable t) {
+                t.printStackTrace();
+                return new JSONObject().put("error", t.getMessage()).toString();
             }
-            // delay web app so that multiple messages are already queued and can be submitted bundled once web app requests messages
-            Thread.sleep(100);
-            return new JSONArray(channelNames).toString();
         });
 
         service.post("/addContact/:userid", (request, response) -> {
@@ -178,7 +183,7 @@ public class ChatIxi extends IxiModule {
             return array.toString();
         });
 
-        service.post("/getOnlineUsers", (request, response) -> {
+        service.post("/getOnlineUsers/", (request, response) -> {
             return getOnlineUsers().toString();
         });
 

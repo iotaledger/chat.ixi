@@ -55,8 +55,8 @@ function set_rest_urls() {
     REST_URL_REMOVE_CHANNEL = REST_URL+"removeChannel/";
     REST_URL_ADD_CONTACT = REST_URL+"addContact/";
     REST_URL_REMOVE_CONTACT = REST_URL+"removeContact/";
-    REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers";
-    REST_URL_INIT = REST_URL+"init";
+    REST_URL_GET_ONLINE_USERS = REST_URL+"getOnlineUsers/";
+    REST_URL_INIT = REST_URL+"init/";
 }
 
 function put_settings() {
