@@ -330,7 +330,7 @@ function add_channel_internally(channel_name) {
 }
 
 function derive_channel_address_from_name(channel_name) {
-    return channel_name.trim().toUpperCase().replace(/[^a-zA-Z0-9]*/g, "").padEnd(81, "9").substr(0, 81);
+    return channel_name.trim().toUpperCase().replace(/[^A-Z9]*/g, "").padEnd(81, "9").substr(0, 81);
 }
 
 function init() {

@@ -59,7 +59,7 @@ java -jar ict-{VERSION}.jar
 
 ### Step 5: Configure CHAT.ixi (Optional)
 
-CHAT.ixi is automatically configured at the first start, so no action is required.
+CHAT.ixi is automatically configured at the first start, so no further action is required.
 
 For manual configuration, open **ict/modules/chat-config/chat.cfg** and change following parameters accordingly:
 
@@ -73,7 +73,8 @@ Replace **{PASSWORD}** with any password to protect your CHAT.ixi from unauthori
 
 ### Step 6: Open the Web GUI
 
-Open **http://{HOST}:2019** in your web browser, where {HOST} is the IP address of your Ict.
+Open Ict Web GUI **http://{HOST}:2187** in your web browser, where {HOST} is the IP address of your Ict. In the **IXI MODULES**
+ tab, you should now find **CHAT.ixi**. Simply click on the open button to access the chat.
 
 <img src="https://cdn-images-1.medium.com/max/2000/1*CxDGQSYolCIYtKNA4_4WcA.png" />
 

@@ -194,7 +194,7 @@ public class ChatIxi extends IxiModule {
             return "";
         });
 
-        LOGGER.info("CHAT.ixi is now running on port "+service.port()+". Open it from your Ict web GUI.");
+        LOGGER.info("CHAT.ixi is now running (port "+service.port()+"). Open it from your Ict web GUI: host:2187/modules/chat.ixi");
     }
 
     public void addChannel(String channelName) {
