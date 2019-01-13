@@ -81,8 +81,7 @@ java -jar ict-{VERSION}.jar
 
 ### Step 6: Open the Web GUI
 
-Open **http://{HOST}:2019** in your web browser. If you are running Ict locally, it should immediately connect you. If no CHAT.ixi
-instance is running on localhost, it will ask you for the ip address of your Ict node.
+Open **http://{HOST}:2019** in your web browser.
 
 <img src="https://cdn-images-1.medium.com/max/2000/1*CxDGQSYolCIYtKNA4_4WcA.png" />
 
