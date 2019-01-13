@@ -14,6 +14,7 @@ import org.iota.ict.network.event.GossipEvent;
 import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.network.event.GossipListener;
 import org.iota.ict.utils.Trytes;
+import org.iota.ixi.chat.utils.PasswordGenerator;
 import org.iota.ixi.chat.utils.aes_key_length.AESKeyLengthFix;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -368,8 +369,8 @@ public class ChatIxi extends IxiModule {
 
     private Properties createAndStoreProperties() {
         java.util.Properties properties = new java.util.Properties();
-        properties.setProperty("username", "anonymous");
-        properties.setProperty("password", "password");
+        properties.setProperty("username", "Anonymous");
+        properties.setProperty("password", PasswordGenerator.randomString(20));
         try {
             OutputStream out = new FileOutputStream(CONFIG_FILE);
             properties.store(out, "");
