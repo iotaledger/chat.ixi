@@ -51,37 +51,30 @@ Move chat.ixi-{VERSION}.jar to the **modules/** directory of your Ict:
 mv chat.ixi-{VERSION}.jar ict/modules
 ```
 
-### Step 4: Configure CHAT.ixi
+### Step 4: Run Ict
 ```shell
-#switch to modules folder
-cd ict/modules
-
-# create chat-config/ directory and switch into it
-mkdir chat-config
-cd chat-config
-
-# Create chat.cfg file and specify username and password:
-# Replace {USERNAME} with the username you want to appear with in the chat.
-# And {PASSWORD} with any password to protect your CHAT.ixi from unauthorized access.
-username={USERNAME}
-password={PASSWORD}
-```
-
-### Step 5: Run Ict
-
-```shell
-# switch back to Ict folder where Ict .jar is located
-cd ../../ict
+# switch back to Ict folder where .jar of Ict is located
+cd ../ict
 
 # run Ict
 java -jar ict-{VERSION}.jar
 ```
 
+### Step 5: Configure CHAT.ixi (Optional)
 
+CHAT.ixi is automatically configured at the first start in **ict/modules/chat-config/chat.cfg**.
+To specify username and password manually:
+
+```
+#Replace **{USERNAME}** with the username you want to appear with in the chat.
+#Replace **{PASSWORD}** with any password to protect your CHAT.ixi from unauthorized access.
+username={USERNAME}
+password={PASSWORD}
+```
 
 ### Step 6: Open the Web GUI
 
-Open **http://{HOST}:2019** in your web browser, where {HOST} is the IP address of your Ict
+Open **http://{HOST}:2019** in your web browser, where {HOST} is the IP address at which your Ict is running.
 
 <img src="https://cdn-images-1.medium.com/max/2000/1*CxDGQSYolCIYtKNA4_4WcA.png" />
 
