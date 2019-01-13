@@ -62,12 +62,15 @@ java -jar ict-{VERSION}.jar
 
 ### Step 5: Configure CHAT.ixi (Optional)
 
-CHAT.ixi is automatically configured at the first start in **ict/modules/chat-config/chat.cfg**.
-To specify username and password manually:
+CHAT.ixi is automatically configured at the first start.
 
+To configure it manually, open in **ict/modules/chat-config/chat.cfg** and change the parameters accordingly:
+
+Replace **{USERNAME}** with the username you want to appear with in the chat.
+Replace **{PASSWORD}** with any password to protect your CHAT.ixi from unauthorized access.
+
+*ict/modules/chat-config/chat.cfg*
 ```
-#Replace **{USERNAME}** with the username you want to appear with in the chat.
-#Replace **{PASSWORD}** with any password to protect your CHAT.ixi from unauthorized access.
 username={USERNAME}
 password={PASSWORD}
 ```
