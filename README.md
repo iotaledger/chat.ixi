@@ -76,7 +76,7 @@ Replace **{PASSWORD}** with any password to protect your CHAT.ixi from unauthori
 
 ### Step 6: Open the Web GUI
 
-Open **http://{HOST}:2019** in your web browser, where {HOST} is the IP address at which your Ict is running.
+Open **http://{HOST}:2019** in your web browser, where {HOST} is the IP address of your Ict.
 
 <img src="https://cdn-images-1.medium.com/max/2000/1*CxDGQSYolCIYtKNA4_4WcA.png" />
 
