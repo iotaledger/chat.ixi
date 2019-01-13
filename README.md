@@ -64,7 +64,7 @@ java -jar ict-{VERSION}.jar
 
 CHAT.ixi is automatically configured at the first start, so no action is required.
 
-For manual configuration, open **ict/modules/chat-config/chat.cfg** and change the parameters accordingly:
+For manual configuration, open **ict/modules/chat-config/chat.cfg** and change following parameters accordingly:
 
 ```
 username={USERNAME}
