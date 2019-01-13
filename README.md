@@ -52,7 +52,9 @@ mv chat.ixi-{VERSION}.jar ict/modules
 ```
 
 ### Step 4: Run Ict
+Switch to the Ict directory and run it:
 ```shell
+cd ict/
 java -jar ict-{VERSION}.jar
 ```
 
