@@ -1,5 +1,6 @@
 package org.iota.ixi.chat.utils;
 
+import org.iota.ixi.chat.ChatIxi;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -12,8 +13,8 @@ public class KeyManagerTest {
 
     @BeforeClass
     public static void setUp() {
-        KeyManager.PUBLIC_KEY_FILE = new File("test_public.key");
-        KeyManager.PRIVATE_KEY_FILE = new File("test_private.key");
+        KeyManager.PUBLIC_KEY_FILE = new File(ChatIxi.DIRECTORY, "test_public.key");
+        KeyManager.PRIVATE_KEY_FILE = new File(ChatIxi.DIRECTORY,"test_private.key");
     }
 
     @Test
@@ -35,6 +36,9 @@ public class KeyManagerTest {
 
     @AfterClass
     public static void tearDown() {
-        KeyManager.deleteKeyFiles();;
+        KeyManager.deleteKeyFiles();
+        KeyManager.PUBLIC_KEY_FILE = new File(ChatIxi.DIRECTORY, "public.key");
+        KeyManager.PRIVATE_KEY_FILE = new File(ChatIxi.DIRECTORY,"private.key");
     }
+    
 }
