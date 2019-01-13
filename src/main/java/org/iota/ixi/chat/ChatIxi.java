@@ -1,6 +1,8 @@
 package org.iota.ixi.chat;
 
 import com.iota.curl.IotaCurlHash;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.iota.ict.ixi.Ixi;
 import org.iota.ict.ixi.IxiModule;
 import org.iota.ixi.chat.model.Credentials;
@@ -43,11 +45,13 @@ public class ChatIxi extends IxiModule {
     private GossipFilter gossipFilter = new GossipFilter();
     private Service service = Service.ignite();
 
+    private static final Logger LOGGER = LogManager.getLogger("CHAT_IXI");
+
     public static final java.io.File DIRECTORY = new java.io.File("modules/chat-config/");
     private static final java.io.File CHANNELS_FILE = new java.io.File(DIRECTORY, "channels.txt");
     private static final java.io.File CONTACTS_FILE = new java.io.File(DIRECTORY, "contacts.txt");
     private static final java.io.File CONFIG_FILE = new java.io.File(DIRECTORY, "chat.cfg");
-    private static final java.io.File WEB_DIRECTORY = new java.io.File(DIRECTORY, "web/");
+    private static final java.io.File WEB_DIRECTORY = new java.io.File("web/modules/CHAT.ixi/");
 
     private int historySize = 100;
 
@@ -89,8 +93,6 @@ public class ChatIxi extends IxiModule {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        service.staticFiles.externalLocation(WEB_DIRECTORY.getAbsolutePath());
 
         service.port(2019);
 
@@ -187,8 +189,7 @@ public class ChatIxi extends IxiModule {
             return "";
         });
 
-        System.out.println("CHAT.ixi is now running on port "+service.port()+". Open it in your web browser to access the chat.");
-
+        LOGGER.info("CHAT.ixi is now running on port "+service.port()+". Open it from your Ict web GUI.");
     }
 
     public void addChannel(String channelName) {
@@ -263,13 +264,12 @@ public class ChatIxi extends IxiModule {
     }
 
     public void addTransactionToQueue(Transaction transaction) {
-
         try {
             Message message = new Message(transaction, contacts, userid);
             if(message.message.length() > 0)
                 messages.add(message);
         } catch (Throwable t) {
-            System.err.println(t.getMessage());
+            LOGGER.warn("Message in transaction "+transaction.hash+" rejected: " + t.getMessage());
         }
     }
 
@@ -277,7 +277,7 @@ public class ChatIxi extends IxiModule {
         try {
             return readStringsFromFile(file);
         } catch (IOException e) {
-            System.err.println("Could not read contacts from file " + file.getAbsolutePath() + ": " + e.getMessage());
+            LOGGER.error("Could not read contacts from file " + file.getAbsolutePath(), e);
             return  new HashSet<>();
         }
     }
@@ -292,7 +292,7 @@ public class ChatIxi extends IxiModule {
                 userDefinedChannels.add("speculation");
             return userDefinedChannels;
         } catch (IOException e) {
-            System.err.println("Could not read channels from file " + file.getAbsolutePath() + ": " + e.getMessage());
+            LOGGER.error("Could not read channels from file " + file.getAbsolutePath(), e);
             return defaultChannels;
         }
     }
@@ -385,12 +385,13 @@ public class ChatIxi extends IxiModule {
         File jarFile = new File(ChatIxi.class.getProtectionDomain().getCodeSource().getLocation().getPath());
         java.util.jar.JarFile jar = new java.util.jar.JarFile(jarFile);
         java.util.Enumeration enumEntries = jar.entries();
+        LOGGER.info("=== EXTRACTING CHAT.IXI WEB GUI INTO " + WEB_DIRECTORY + " ===");
         while (enumEntries.hasMoreElements()) {
             java.util.jar.JarEntry file = (java.util.jar.JarEntry) enumEntries.nextElement();
             if(!file.getName().startsWith("web/"))
                 continue;
-            System.err.println(" EXTRACTING " + file.getName() + " ...");
-            java.io.File f = new java.io.File(DIRECTORY + java.io.File.separator + file.getName());
+            LOGGER.info("EXTRACTING " + file.getName() + " ...");
+            java.io.File f = new java.io.File(WEB_DIRECTORY, file.getName().replaceAll("^web/", ""));
             if (file.isDirectory()) {
                 f.mkdirs();
                 continue;
