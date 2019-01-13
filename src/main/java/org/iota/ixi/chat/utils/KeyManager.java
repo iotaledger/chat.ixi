@@ -7,8 +7,8 @@ import java.io.IOException;
 
 public class KeyManager {
 
-    static final File PUBLIC_KEY_FILE = new File(ChatIxi.DIRECTORY, "public.key");
-    static final File PRIVATE_KEY_FILE = new File(ChatIxi.DIRECTORY, "private.key");
+    static File PUBLIC_KEY_FILE = new File(ChatIxi.DIRECTORY, "public.key");
+    static File PRIVATE_KEY_FILE = new File(ChatIxi.DIRECTORY, "private.key");
 
     public static KeyPair loadKeyPair() {
         try {

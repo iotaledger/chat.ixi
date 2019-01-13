@@ -33,7 +33,7 @@ public class ChatIxi extends IxiModule {
 
     private static final HashMap<String, String> channelByAddress = new HashMap<>();
     private static final HashMap<String, String> addressByChannel = new HashMap<>();
-    final BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
+    public final BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
 
     private final String userid;
     private final Credentials credentials;
@@ -191,7 +191,7 @@ public class ChatIxi extends IxiModule {
 
     }
 
-    protected void addChannel(String channelName) {
+    public void addChannel(String channelName) {
         channelNames.add(channelName);
         storeChannels();
 
@@ -246,7 +246,7 @@ public class ChatIxi extends IxiModule {
         return prefix + Trytes.fromNumber(BigInteger.valueOf(minuteIndex), Transaction.Field.TAG.tryteLength - prefix.length());
     }
 
-    void submitMessage(String channel, String message) {
+    public void submitMessage(String channel, String message) {
         Message toSend = createMessage(channel, message);
         Transaction transaction = toSend.toTransaction();
         if(transaction != null)
