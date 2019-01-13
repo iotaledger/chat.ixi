@@ -403,7 +403,6 @@ function submit_life_sign() {
     const c_last_life_sign = get_cookie(cookie_name);
     let lls = c_last_life_sign === undefined || c_last_life_sign === "" ? last_life_sign : c_last_life_sign;
 
-    console.log(lls  + ", " + (new Date() - lls));
     if((new Date() - lls < 240000))
         return;
 
