@@ -58,7 +58,7 @@ mv chat.ixi-{VERSION}.jar ict/modules
 ### Step 4: Configure CHAT.ixi
 ```shell
 #switch to modules folder
-cd /ict/modules
+cd ict/modules
 
 # create chat-config/ directory and switch into it
 mkdir chat-config
@@ -67,7 +67,6 @@ cd chat-config
 # Create chat.cfg file and specify username and password:
 # Replace {USERNAME} with the username you want to appear with in the chat.
 # And {PASSWORD} with any password to protect your CHAT.ixi from unauthorized access.
-
 username={USERNAME}
 password={PASSWORD}
 ```
