@@ -187,7 +187,7 @@ public class ChatIxi extends IxiModule {
             return "";
         });
 
-        System.out.println("CHAT.ixi is now running on port "+service.port()+". Open it in your web browser to access the chat.");
+        System.out.println("CHAT.ixi is now running. Open it within the Ict Web GUI.");
 
     }
 
