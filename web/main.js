@@ -48,7 +48,7 @@ function load_settings() {
 }
 
 function set_rest_urls() {
-    REST_URL = window.location.protocol + "//" + window.location.hostname + ":2019";
+    REST_URL = window.location.protocol + "//" + window.location.hostname + ":2019/";
     REST_URL_GET = REST_URL+"getMessage/";
     REST_URL_SUBMIT = REST_URL+"submitMessage/";
     REST_URL_ADD_CHANNEL = REST_URL+"addChannel/";
@@ -384,7 +384,7 @@ function read_message() {
 function ask_for_password_and_connect() {
     swal({
         title: 'Enter password for API',
-        text: 'Your password is defines in:\n\nict/modules/chat-config/chat.cfg.',
+        text: 'Your password is defined in:\n\nict/modules/chat-config/chat.cfg.',
         input: 'password',
     }).then(function (text) {
         settings['password'] = text.value;
