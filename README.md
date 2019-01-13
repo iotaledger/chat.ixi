@@ -16,10 +16,6 @@ CHAT.ixi is described in more detail in this official [IOTA blog post](https://b
 
 Please find instructions on [iotaledger/ict](https://github.com/iotaledger/ict#installation).
 
-There are a few community made resources for the Ict installation, but probably not up to date. Use them at your own risk:
-* [IOTA Omega-Ict tutorial: noob edition](https://medium.com/@lambtho/iota-omega-ict-tutorial-noob-edition-ff9e1e6d6c2f) (Guide) by Lambtho
-* [ict-install](https://github.com/phschaeff/ict-install) (Script) by phschaeff
-
 Make sure you are connected to the main network and not to an island, otherwise you won't be able to message anyone in the main network.
 
 ### Step 2: Get CHAT.ixi
@@ -28,8 +24,8 @@ There are two ways to do this:
 
 #### Simple Method
 
-Go to [releases](https://github.com/iotaledger/chat.ixi/releases) and download the **chat.ixi-{VERSION}.zip**
-from the most recent release. Unzip its content into any directory.
+Go to [releases](https://github.com/iotaledger/chat.ixi/releases) and download the **chat.ixi-{VERSION}.jar**
+from the most recent release.
 
 #### Advanced Method
 
