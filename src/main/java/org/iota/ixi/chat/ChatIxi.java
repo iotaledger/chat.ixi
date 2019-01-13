@@ -42,7 +42,7 @@ public class ChatIxi extends IxiModule {
     private GossipFilter gossipFilter = new GossipFilter();
     private Service service = Service.ignite();
 
-    public static final java.io.File DIRECTORY = new java.io.File("modules/chat.ixi/");
+    public static final java.io.File DIRECTORY = new java.io.File("modules/chat-config/");
     private static final java.io.File CHANNELS_FILE = new java.io.File(DIRECTORY, "channels.txt");
     private static final java.io.File CONTACTS_FILE = new java.io.File(DIRECTORY, "contacts.txt");
     private static final java.io.File CONFIG_FILE = new java.io.File(DIRECTORY, "chat.cfg");
@@ -351,10 +351,8 @@ public class ChatIxi extends IxiModule {
     }
 
     private Properties loadPropertes() {
-
         if(!CONFIG_FILE.exists())
             return createAndStoreProperties();
-
         Properties properties = new Properties();
         InputStream input = null;
         try {
@@ -366,6 +364,17 @@ public class ChatIxi extends IxiModule {
         } finally {
             try { input.close(); } catch(Throwable t) { ; }
         }
+    }
+
+    private Properties createAndStoreProperties() {
+        java.util.Properties properties = new java.util.Properties();
+        properties.setProperty("username", "anonymous");
+        properties.setProperty("password", "password");
+        try {
+            OutputStream out = new FileOutputStream(CONFIG_FILE);
+            properties.store(out, "");
+            return properties;
+        } catch (IOException e) { throw new RuntimeException(e); }
     }
 
     /**
@@ -395,17 +404,6 @@ public class ChatIxi extends IxiModule {
             is.close();
         }
         jar.close();
-    }
-
-    private Properties createAndStoreProperties() {
-        java.util.Properties properties = new java.util.Properties();
-        properties.setProperty("username", "anonymous");
-        properties.setProperty("password", "password");
-        try {
-            OutputStream out = new FileOutputStream(CONFIG_FILE);
-            properties.store(out, "");
-            return properties;
-        } catch (IOException e) { throw new RuntimeException(e); }
     }
 
     @Override

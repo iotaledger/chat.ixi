@@ -12,16 +12,17 @@ CHAT.ixi is described in more detail in this official [IOTA blog post](https://b
 
 ## Installation
 
-### Step 1: Install and Run Ict
+### Step 1: Install Ict
 
-Please find instructions on [iotaledger/ict](https://github.com/iotaledger/ict#installation). There are a few
-community made resources for the Ict installation. Use them at your own risk:
+Please find instructions on [iotaledger/ict](https://github.com/iotaledger/ict#installation).
+
+There are a few community made resources for the Ict installation, but probably not up to date. Use them at your own risk:
 * [IOTA Omega-Ict tutorial: noob edition](https://medium.com/@lambtho/iota-omega-ict-tutorial-noob-edition-ff9e1e6d6c2f) (Guide) by Lambtho
 * [ict-install](https://github.com/phschaeff/ict-install) (Script) by phschaeff
 
 Make sure you are connected to the main network and not to an island, otherwise you won't be able to message anyone in the main network.
 
-### Step 2: Install CHAT.ixi
+### Step 2: Get CHAT.ixi
 
 There are two ways to do this:
 
@@ -45,23 +46,47 @@ git clone https://github.com/iotaledger/chat.ixi
 cd chat.ixi
 
 # build the chat.ixi-{VERSION}.jar file
-gradle fatJar
+gradle ixi
 ```
 
-### Step 3: Run CHAT.ixi
+### Step 3: Install CHAT.ixi
+Move chat.ixi-{VERSION}.jar to the **modules/** directory of your Ict:
+```shell
+mv chat.ixi-{VERSION}.jar ict/modules
+```
+
+### Step 4: Configure CHAT.ixi
+```shell
+#switch to modules folder
+cd /ict/modules
+
+# create chat-config/ directory and switch into it
+mkdir chat-config
+cd chat-config
+
+# Create chat.cfg file and specify username and password:
+# Replace {USERNAME} with the username you want to appear with in the chat.
+# And {PASSWORD} with any password to protect your CHAT.ixi from unauthorized access.
+
+username={USERNAME}
+password={PASSWORD}
+```
+
+### Step 4: Run Ict
 
 ```shell
-# Please replace {ICT} with the name of your Ict. You can find it in your ict.cfg file. The default setting is 'ict'.
-# Set 'ixi_enabled=true' in your ict.cfg configuration file.
-# Also replace {USERNAME} with the username you want to appear with in the chat.
-# And {PASSWORD} with any password to protect your CHAT.ixi from unauthorized access.
-java -jar chat.ixi-{VERSION}.jar {ICT} {USERNAME} {PASSWORD}
-# EXAMPLE: java -jar chat.ixi-1.2.3.jar my_cool_ict SatoshiNakamoto
+# switch back to Ict folder
+cd ../../ict
+
+# run Ict
+java -jar ict-{VERSION}.jar
 ```
 
-### Step 4: Open the Web GUI
 
-Open web/index.html in your web browser. If you are running Ict locally, it should immediately connect you. If no CHAT.ixi
+
+### Step 6: Open the Web GUI
+
+Open **http://{HOST}:2019** in your web browser. If you are running Ict locally, it should immediately connect you. If no CHAT.ixi
 instance is running on localhost, it will ask you for the ip address of your Ict node.
 
 <img src="https://cdn-images-1.medium.com/max/2000/1*CxDGQSYolCIYtKNA4_4WcA.png" />
