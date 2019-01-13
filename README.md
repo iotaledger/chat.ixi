@@ -67,7 +67,7 @@ username={USERNAME}
 password={PASSWORD}
 ```
 
-### Step 4: Run Ict
+### Step 5: Run Ict
 
 ```shell
 # switch back to Ict folder
