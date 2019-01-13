@@ -40,5 +40,5 @@ public class KeyManagerTest {
         KeyManager.PUBLIC_KEY_FILE = new File(ChatIxi.DIRECTORY, "public.key");
         KeyManager.PRIVATE_KEY_FILE = new File(ChatIxi.DIRECTORY,"private.key");
     }
-    
+
 }

@@ -355,7 +355,7 @@ function init() {
         },
         error: function (err) {
             $('#loading_page').addClass("hidden");
-            const msg = "Could not connect to <code>" + REST_URL + "</code><br/><br/>"+JSON.stringify(err) + "</b><br/><br/>Maybe you got the password wrong? Let's try again.";
+            const msg = "Could not connect to <code>" + REST_URL + "</code><br/><br/>"+JSON.stringify(err) + "</b><br/><br/>Maybe you got the password wrong? Check your ict/modules/chat-config/chat.cfg file.";
             swal("Failed to connecto to API", msg, "warning").then(ask_for_password_and_connect);
         }
     });
