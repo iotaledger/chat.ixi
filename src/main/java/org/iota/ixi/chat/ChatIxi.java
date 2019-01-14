@@ -240,7 +240,7 @@ public class ChatIxi extends IxiModule {
     }
 
     private String deriveChannelAddressFromName(String channelName) {
-        String trytes = channelName.trim().toUpperCase().replaceAll("[^a-zA-Z0-9]", "");
+        String trytes = channelName.trim().toUpperCase().replaceAll("[^a-zA-Z9]", "");
         assert Trytes.isTrytes(trytes);
         String padded = Trytes.padRight(trytes.substring(0, Math.min(81, trytes.length())), 81);
         return getAddressOfChannel(padded);

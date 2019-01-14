@@ -144,7 +144,7 @@ public class Message {
         builder.asciiMessage(seed+encrypted);
 
         builder.tag = ChatIxi.calcLifeSignTag(System.currentTimeMillis());
-        return builder.build();
+        return builder.buildWhileUpdatingTimestamp();
     }
 
     private static String secureTryteSeed() {
