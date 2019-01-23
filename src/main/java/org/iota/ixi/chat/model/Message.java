@@ -53,12 +53,13 @@ public class Message {
 
     public Message(Transaction transaction, Set<String> contacts, String ownUserid) throws JSONException, AES.AESException, RSA.RSAException {
 
-        channel = ChatIxi.getChannelOfAddress(transaction.address);
+        channel = ChatIxi.getChannelOfAddress(transaction.address());
+        String decodedSignatureFragments = transaction.decodedSignatureFragments();
 
-        String seed = transaction.decodedSignatureFragments.substring(0, SEED_LENGTH);
+        String seed = decodedSignatureFragments.substring(0, SEED_LENGTH);
         byte[] bytes = Trytes.toBytes(seed);
         IvParameterSpec ivParameterSpec = new IvParameterSpec(bytes);
-        String encrypted = transaction.decodedSignatureFragments.substring(SEED_LENGTH);
+        String encrypted =  decodedSignatureFragments.substring(SEED_LENGTH);
         String jsonString = AES.decrypt(encrypted, channel, ivParameterSpec);
         final JSONObject jsonObject = new JSONObject(jsonString);
 
