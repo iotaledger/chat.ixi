@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.iotaledger:ict:ff7e2ba3541d1b4daac1e7b3d366aaf44c5c7d3d'
+    compile 'com.github.iotaledger:ict:bcdc247c6fbbedc7f749533bfc2c9628cadcf7a4'
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.1'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.1'
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.21'
@@ -28,8 +28,11 @@ dependencies {
 task ixi(type: Jar) {
     baseName = 'chat.ixi'
     destinationDir = file("$rootDir")
-    from("./") { include 'module.json' }
-    from("./") { include 'web/**' }
+    from("./") {
+        include 'module.json'
+        include 'web/**'
+    }
+    exclude ("org/iota/ict/**")
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }

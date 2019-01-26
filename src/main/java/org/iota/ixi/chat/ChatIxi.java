@@ -5,16 +5,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.iota.ict.ixi.Ixi;
 import org.iota.ict.ixi.IxiModule;
+import org.iota.ict.ixi.context.ConfigurableIxiContext;
+import org.iota.ict.ixi.context.IxiContext;
+import org.iota.ict.utils.IOHelper;
 import org.iota.ixi.chat.model.Credentials;
 import org.iota.ixi.chat.model.Message;
 import org.iota.ixi.chat.model.MessageBuilder;
-import org.iota.ixi.chat.utils.FileOperations;
 import org.iota.ixi.chat.utils.KeyManager;
 import org.iota.ixi.chat.utils.KeyPair;
 import org.iota.ict.model.Transaction;
 import org.iota.ict.network.event.GossipEvent;
 import org.iota.ict.network.event.GossipFilter;
-import org.iota.ict.network.event.GossipListener;
 import org.iota.ict.utils.Trytes;
 import org.iota.ixi.chat.utils.PasswordGenerator;
 import org.iota.ixi.chat.utils.aes_key_length.AESKeyLengthFix;
@@ -37,20 +38,15 @@ public class ChatIxi extends IxiModule {
     private static final HashMap<String, String> addressByChannel = new HashMap<>();
     public final BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
 
+    private final ChatContext context;
     private final String userid;
-    private final Credentials credentials;
+    private Credentials credentials;
     private final KeyPair keyPair;
-    private final Set<String> channelNames;
-    private final Set<String> contacts;
     private GossipFilter gossipFilter = new GossipFilter();
     private Service service = Service.ignite();
 
     private static final Logger LOGGER = LogManager.getLogger("CHAT_IXI");
-
-    public static final java.io.File DIRECTORY = new java.io.File("modules/chat-config/");
-    private static final java.io.File CHANNELS_FILE = new java.io.File(DIRECTORY, "channels.txt");
-    private static final java.io.File CONTACTS_FILE = new java.io.File(DIRECTORY, "contacts.txt");
-    private static final java.io.File CONFIG_FILE = new java.io.File(DIRECTORY, "chat.cfg");
+    public static final java.io.File DIRECTORY = new java.io.File("modules/chat.ixi/");
     private static final java.io.File WEB_DIRECTORY = new java.io.File("web/modules/CHAT.ixi/");
 
     private int historySize = 100;
@@ -65,34 +61,39 @@ public class ChatIxi extends IxiModule {
 
         this.keyPair = KeyManager.loadKeyPair();
         this.userid = Message.generateUserid(keyPair.getPublicKeyAsString());
-        this.contacts = loadContacts(CONTACTS_FILE);
-        this.channelNames = loadChannels(CHANNELS_FILE);
-        this.credentials = loadCredentials();
 
-        storeChannels();
-        contacts.add(userid);
+        context = new ChatContext();
+        context.applyConfiguration();
 
-        ixi.addGossipListener(new GossipListener() {
-            @Override
-            public void onGossipEvent(GossipEvent event) {
-                if(gossipFilter.passes(event.getTransaction()))
-                    addTransactionToQueue(event.getTransaction());
-            }
+        // context.store(); TODO
+        context.contacts.add(userid);
+
+        ixi.addGossipListener((GossipEvent event) -> {
+            if(gossipFilter.passes(event.getTransaction()))
+                addTransactionToQueue(event.getTransaction());
         });
-
     }
 
     @Override
-    public void run() {
-
+    public void install() {
         try {
             if(!DIRECTORY.exists())
                 DIRECTORY.mkdirs();
             if (!WEB_DIRECTORY.exists())
-                extractWebDirectory();
+                IOHelper.extractDirectoryFromJarFile(ChatIxi.class, "web/", WEB_DIRECTORY.getPath());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void uninstall() {
+        IOHelper.deleteRecursively(DIRECTORY);
+        IOHelper.deleteRecursively(WEB_DIRECTORY);
+    }
+
+    @Override
+    public void run() {
 
         service.port(2019);
 
@@ -115,7 +116,7 @@ public class ChatIxi extends IxiModule {
                 synchronized(this) {
                     try { historySize = Integer.parseInt(request.queryParams("history_size")); } catch (Throwable t) { ; }
                     messages.add(new Message());
-                    for(String channel : channelNames) {
+                    for(String channel : context.channelNames) {
                         String channelAddress = deriveChannelAddressFromName(channel);
                         gossipFilter.watchAddress(channelAddress);
                         pullChannelHistory(channelAddress);
@@ -123,7 +124,7 @@ public class ChatIxi extends IxiModule {
                 }
                 // delay web app so that multiple messages are already queued and can be submitted bundled once web app requests messages
                 Thread.sleep(100);
-                return new JSONArray(channelNames).toString();
+                return new JSONArray(context.channelNames).toString();
             } catch (Throwable t) {
                 t.printStackTrace();
                 return new JSONObject().put("error", t.getMessage()).toString();
@@ -131,14 +132,14 @@ public class ChatIxi extends IxiModule {
         });
 
         service.post("/addContact/:userid", (request, response) -> {
-            contacts.add(request.params(":userid"));
-            storeContacts();
+            context.contacts.add(request.params(":userid"));
+            // context.store(); TODO
             return "";
         });
 
         service.post("/removeContact/:userid", (request, response) -> {
-            contacts.remove(request.params(":userid"));
-            storeContacts();
+            context.contacts.remove(request.params(":userid"));
+            // context.store(); TODO
             return "";
         });
 
@@ -146,16 +147,7 @@ public class ChatIxi extends IxiModule {
 
             synchronized (this) { // synchronized necessary for correct order of setGossipFilter()
                 String channelName = request.queryParams("name");
-                String channelAddress = deriveChannelAddressFromName(channelName);
-
-                Set<String> channelNamesToRemove = new HashSet<>();
-                for(String c : channelNames)
-                    if(deriveChannelAddressFromName(c).equals(channelAddress))
-                        channelNamesToRemove.add(c);
-                channelNames.removeAll(channelNamesToRemove);
-                storeChannels();
-
-                gossipFilter.unwatchAddress(channelAddress);
+                removeChannel(channelName);
                 return "";
             }
         });
@@ -197,9 +189,22 @@ public class ChatIxi extends IxiModule {
         LOGGER.info("CHAT.ixi is now running (port "+service.port()+"). Open it from your Ict web GUI: host:2187/modules/chat.ixi");
     }
 
+    private void removeChannel(String channelName) {
+        String channelAddress = deriveChannelAddressFromName(channelName);
+
+        Set<String> channelNamesToRemove = new HashSet<>();
+        for(String c : context.channelNames)
+            if(deriveChannelAddressFromName(c).equals(channelAddress))
+                channelNamesToRemove.add(c);
+        context.channelNames.removeAll(channelNamesToRemove);
+        //context.store(); TODO
+
+        gossipFilter.unwatchAddress(channelAddress);
+    };
+
     public void addChannel(String channelName) {
-        channelNames.add(channelName);
-        storeChannels();
+        context.channelNames.add(channelName);
+        //context.store(); TODO
 
         String channelAddress = deriveChannelAddressFromName(channelName);
         gossipFilter.watchAddress(channelAddress);
@@ -225,12 +230,12 @@ public class ChatIxi extends IxiModule {
         JSONObject onlineUsers = new JSONObject();
         for(Transaction transaction : recentLifeSigns)
             try {
-                Message message = new Message(transaction, contacts, userid);
+                Message message = new Message(transaction, context.contacts, userid);
                 if(onlineUsers.has(message.userid) && onlineUsers.getJSONObject(message.userid).getLong("timestamp") > message.timestamp)
                     continue;
 
                 JSONObject onlineUser = new JSONObject();
-                onlineUser.put("is_trusted", contacts.contains(message.userid));
+                onlineUser.put("is_trusted", context.contacts.contains(message.userid));
                 onlineUser.put("username", message.username);
                 onlineUser.put("timestamp", message.timestamp);
                 onlineUsers.put(message.userid, onlineUser);
@@ -270,59 +275,12 @@ public class ChatIxi extends IxiModule {
 
     public void addTransactionToQueue(Transaction transaction) {
         try {
-            Message message = new Message(transaction, contacts, userid);
+            Message message = new Message(transaction, context.contacts, userid);
             if(message.message.length() > 0)
                 messages.add(message);
         } catch (Throwable t) {
             LOGGER.warn("Message in transaction "+transaction.hash+" rejected: " + t.getMessage());
         }
-    }
-
-    private Set<String> loadContacts(File file) {
-        try {
-            return readStringsFromFile(file);
-        } catch (IOException e) {
-            LOGGER.error("Could not read contacts from file " + file.getAbsolutePath(), e);
-            return  new HashSet<>();
-        }
-    }
-
-    private Set<String> loadChannels(File file) {
-        final Set<String> defaultChannels = new HashSet<>(Arrays.asList("speculation", "announcements", "ict", "casual"));
-        if(!file.exists())
-            return defaultChannels;
-        try {
-            Set<String> userDefinedChannels = readStringsFromFile(file);
-            if(userDefinedChannels.isEmpty())
-                userDefinedChannels.add("speculation");
-            return userDefinedChannels;
-        } catch (IOException e) {
-            LOGGER.error("Could not read channels from file " + file.getAbsolutePath(), e);
-            return defaultChannels;
-        }
-    }
-
-    private Set<String> readStringsFromFile(File file) throws IOException {
-        Set<String> strings = new HashSet<>();
-        if(file.exists()) {
-            String channelsFileContent = FileOperations.readFromFile(file);
-            strings.addAll(Arrays.asList(channelsFileContent.split(",")));
-        }
-        return strings;
-    }
-
-    private void storeContacts() {
-        StringJoiner sj = new StringJoiner(",");
-        for(String contact : contacts)
-            sj.add(contact);
-        FileOperations.writeToFile(CONTACTS_FILE, sj.toString());
-    }
-
-    private void storeChannels() {
-        StringJoiner sj = new StringJoiner(",");
-        for(String channelname : channelNames)
-            sj.add(channelname);
-        FileOperations.writeToFile(CHANNELS_FILE, sj.toString());
     }
 
     public static void validateUsername(String username) {
@@ -345,77 +303,119 @@ public class ChatIxi extends IxiModule {
         return address;
     }
 
-    private Credentials loadCredentials() {
-        Properties properties = loadPropertes();
-        String username = properties.getProperty("username");
-        String password = properties.getProperty("password");
-        if(username == null || username.length() == 0)
-            throw new RuntimeException("username not set in " + CONFIG_FILE.getAbsolutePath());
-        if(password == null || password.length() == 0)
-            throw new RuntimeException("password not set in " + CONFIG_FILE.getAbsolutePath());
-        return new Credentials(username, password);
-    }
-
-    private Properties loadPropertes() {
-        if(!CONFIG_FILE.exists())
-            return createAndStoreProperties();
-        Properties properties = new Properties();
-        InputStream input = null;
-        try {
-            input = new FileInputStream(CONFIG_FILE);
-            properties.load(input);
-            return properties;
-        } catch (Throwable t) {
-            throw new RuntimeException(t.getMessage());
-        } finally {
-            try { input.close(); } catch(Throwable t) { ; }
-        }
-    }
-
-    private Properties createAndStoreProperties() {
-        java.util.Properties properties = new java.util.Properties();
-        properties.setProperty("username", "Anonymous");
-        properties.setProperty("password", PasswordGenerator.random());
-        try {
-            OutputStream out = new FileOutputStream(CONFIG_FILE);
-            properties.store(out, "");
-            return properties;
-        } catch (IOException e) { throw new RuntimeException(e); }
-    }
-
-    /**
-     * CREDITS: https://stackoverflow.com/questions/1529611/how-to-write-a-java-program-which-can-extract-a-jar-file-and-store-its-data-in-s/1529707#1529707
-     * */
-    private void extractWebDirectory() throws IOException {
-        File jarFile = new File(ChatIxi.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-        java.util.jar.JarFile jar = new java.util.jar.JarFile(jarFile);
-        java.util.Enumeration enumEntries = jar.entries();
-        LOGGER.info("=== EXTRACTING CHAT.IXI WEB GUI INTO " + WEB_DIRECTORY + " ===");
-        while (enumEntries.hasMoreElements()) {
-            java.util.jar.JarEntry file = (java.util.jar.JarEntry) enumEntries.nextElement();
-            if(!file.getName().startsWith("web/"))
-                continue;
-            LOGGER.info("EXTRACTING " + file.getName() + " ...");
-            java.io.File f = new java.io.File(WEB_DIRECTORY, file.getName().replaceAll("^web/", ""));
-            if (file.isDirectory()) {
-                f.mkdirs();
-                continue;
-            }
-            f.createNewFile();
-            java.io.InputStream is = jar.getInputStream(file); // get the input stream
-            java.io.FileOutputStream fos = new java.io.FileOutputStream(f);
-            while (is.available() > 0) {
-                fos.write(is.read());
-            }
-            fos.close();
-            is.close();
-        }
-        jar.close();
+    @Override
+    public void onTerminate() {
+        service.stop();
     }
 
     @Override
-    public void terminate() {
-        service.stop();
-        super.terminate();
+    public IxiContext getContext() {
+        return context;
+    }
+
+    private class ChatContext extends ConfigurableIxiContext {
+
+        private final Set<String> channelNames = new HashSet<>();
+        private Set<String> contacts = new HashSet<>();
+
+        private static final String FIELD_PASSWORD = "password";
+        private static final String FIELD_USERNAME = "username";
+        private static final String FIELD_CHANNELS = "channels";
+        private static final String FIELD_CONTACTS = "contacts";
+
+        private ChatContext() {
+            super(new JSONObject()
+                    .put(FIELD_USERNAME, "Anonymous")
+                    .put(FIELD_PASSWORD, PasswordGenerator.random())
+                    .put(FIELD_CHANNELS, new JSONArray("casual,ict,announcements,speculation".split(",")))
+                    .put(FIELD_CONTACTS, new JSONArray().put(userid)));
+        }
+
+        @Override
+        protected void validateConfiguration(JSONObject newConfiguration) {
+            validatePassword(newConfiguration);
+            validateUsername(newConfiguration);
+            validateChannels(newConfiguration);
+            validateContacts(newConfiguration);
+        }
+
+        @Override
+        protected void applyConfiguration() {
+            credentials = new Credentials(configuration.getString(FIELD_USERNAME), configuration.getString(FIELD_PASSWORD));
+            JSONArray channelArray = configuration.getJSONArray(FIELD_CHANNELS);
+            JSONArray contactArray = configuration.getJSONArray(FIELD_CONTACTS);
+            applyChannels(channelArray);
+            contacts = new HashSet<>();
+            for(Object contact : contactArray.toList())
+                contacts.add((String)contact);
+        }
+
+        private void applyChannels(JSONArray channelArray) {
+            HashSet<Object> newChannelNames = new HashSet<>(channelArray.toList());
+            // remove old channels
+            for(String channelName : new HashSet<>(channelNames))
+                if(!newChannelNames.contains(channelName))
+                    removeChannel(channelName);
+            // add new channels
+            for(int i = 0; i < channelArray.length(); i++)
+                if(!channelNames.contains(channelArray.getString(i)))
+                    addChannel(channelArray.getString(i));
+        }
+
+        @Override
+        public JSONObject getConfiguration() {
+            return new JSONObject()
+                .put(FIELD_USERNAME, credentials.getUsername())
+                .put(FIELD_PASSWORD, credentials.getPassword())
+                .put(FIELD_CONTACTS, new JSONArray(contacts))
+                .put(FIELD_CHANNELS, new JSONArray(channelNames));
+        }
+
+        private void validatePassword(JSONObject newConfiguration) {
+            if(!newConfiguration.has(FIELD_PASSWORD))
+                throw new IllegalPropertyException(FIELD_PASSWORD, "not defined");
+            if(!(newConfiguration.get(FIELD_PASSWORD) instanceof String))
+                throw new IllegalPropertyException(FIELD_PASSWORD, "not a string");
+            if(newConfiguration.getString(FIELD_PASSWORD).length() < 8)
+                throw new IllegalPropertyException(FIELD_PASSWORD, "too short");
+        }
+
+        private void validateChannels(JSONObject newConfiguration) {
+            if(!newConfiguration.has(FIELD_CHANNELS))
+                throw new IllegalPropertyException(FIELD_CHANNELS, "not defined");
+            if(!(newConfiguration.get(FIELD_CHANNELS) instanceof JSONArray))
+                throw new IllegalPropertyException(FIELD_CHANNELS, "not an array");
+            JSONArray array = newConfiguration.getJSONArray(FIELD_CHANNELS);
+            for(int i = 0; i < array.length(); i++)
+                if(!(array.get(i) instanceof String))
+                    throw new IllegalPropertyException(FIELD_CHANNELS, "array element at index "+i+" is not a string");
+        }
+
+        private void validateContacts(JSONObject newConfiguration) {
+            if(!newConfiguration.has(FIELD_CONTACTS))
+                throw new IllegalPropertyException(FIELD_CONTACTS, "not defined");
+            if(!(newConfiguration.get(FIELD_CONTACTS) instanceof JSONArray))
+                throw new IllegalPropertyException(FIELD_CONTACTS, "not an array");
+            JSONArray array = newConfiguration.getJSONArray(FIELD_CONTACTS);
+            for(int i = 0; i < array.length(); i++)
+                if(!(array.get(i) instanceof String))
+                    throw new IllegalPropertyException(FIELD_CONTACTS, "array element at index "+i+" is not a string");
+                else if(!array.getString(i).matches("^[A-Z9]{0,8}$"))
+                    throw new IllegalPropertyException(FIELD_CONTACTS, "array element at index "+i+" is not a valid user id");
+        }
+
+        private void validateUsername(JSONObject newConfiguration) {
+            if(!newConfiguration.has(FIELD_USERNAME))
+                throw new IllegalPropertyException(FIELD_USERNAME, "not defined");
+            if(!(newConfiguration.get(FIELD_USERNAME) instanceof String))
+                throw new IllegalPropertyException(FIELD_USERNAME, "not a string");
+            ChatIxi.validateUsername(newConfiguration.getString(FIELD_USERNAME));
+        }
+
+        private class IllegalPropertyException extends IllegalArgumentException {
+            private IllegalPropertyException(String field, String cause) {
+                super("Invalid property '"+field+"': " + cause + ".");
+            }
+        }
     }
 }
