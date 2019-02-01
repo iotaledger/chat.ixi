@@ -192,7 +192,7 @@ function show_message(tx) {
     if(channel !== current_channel) { return; }
 
     const date = new Date(timestamp);
-    const time = ("0"+date.getHours()).slice(-2) + ":" + ("0"+date.getMinutes()).slice(-2) + ":" + ("0"+date.getSeconds()).slice(-2);
+    const time = date.toLocaleString('en-us', {hour12: false, day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric", second: "numeric"});
 
     let icon = icons[user_id];
     if(!icon) {
@@ -206,7 +206,7 @@ function show_message(tx) {
                 copy("@"+user_id, "@"+user_id);
             })
         .text(username + "@" + user_id.substr(0, 8)))
-        .append(" at " + time);
+        .append(" on " + time);
 
 
     const urlRegex = /((https?:\/\/|www.)(www.)?[^ "']*)/gim;
