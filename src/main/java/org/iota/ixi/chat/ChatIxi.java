@@ -47,7 +47,7 @@ public class ChatIxi extends IxiModule {
 
     private static final Logger LOGGER = LogManager.getLogger("CHAT_IXI");
     public static final java.io.File DIRECTORY = new java.io.File("modules/chat.ixi/");
-    private static final java.io.File WEB_DIRECTORY = new java.io.File("web/modules/CHAT.ixi/");
+    private static final java.io.File WEB_DIRECTORY = new java.io.File("web/dist/modules/CHAT.ixi/");
 
     private int historySize = 100;
 

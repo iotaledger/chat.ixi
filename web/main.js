@@ -384,7 +384,7 @@ function read_message() {
 function ask_for_password_and_connect() {
     swal({
         title: 'Enter password for API',
-        text: 'Your password is defined in:\n\nict/modules/chat-config/chat.cfg.',
+        text: 'Your password is defined in your CHAT.ixi configuration. Access it from your web GUI.',
         input: 'password',
     }).then(function (text) {
         settings['password'] = text.value;
