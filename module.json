@@ -1,9 +1,9 @@
 {
-  "version": "1.4",
+  "version": "1.5",
   "name": "CHAT.ixi",
   "main_class": "org.iota.ixi.chat.ChatIxi",
   "description": "This IXI module allows users in the Ict network to exchange messages on a permissionless, distributed data-integrity protocol - the Tangle.",
   "repository": "iotaledger/chat.ixi",
   "gui_port": 0,
-  "supported_versions": ["0.5", "0.5-SNAPSHOT"]
+  "supported_versions": ["0.6"]
 }
