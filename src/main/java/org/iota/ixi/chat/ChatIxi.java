@@ -7,15 +7,16 @@ import org.iota.ict.ixi.Ixi;
 import org.iota.ict.ixi.IxiModule;
 import org.iota.ict.ixi.context.ConfigurableIxiContext;
 import org.iota.ict.ixi.context.IxiContext;
+import org.iota.ict.model.transaction.Transaction;
+import org.iota.ict.network.gossip.GossipEvent;
+import org.iota.ict.network.gossip.GossipFilter;
+import org.iota.ict.network.gossip.GossipListener;
 import org.iota.ict.utils.IOHelper;
 import org.iota.ixi.chat.model.Credentials;
 import org.iota.ixi.chat.model.Message;
 import org.iota.ixi.chat.model.MessageBuilder;
 import org.iota.ixi.chat.utils.KeyManager;
 import org.iota.ixi.chat.utils.KeyPair;
-import org.iota.ict.model.Transaction;
-import org.iota.ict.network.event.GossipEvent;
-import org.iota.ict.network.event.GossipFilter;
 import org.iota.ict.utils.Trytes;
 import org.iota.ixi.chat.utils.PasswordGenerator;
 import org.iota.ixi.chat.utils.aes_key_length.AESKeyLengthFix;
@@ -68,22 +69,33 @@ public class ChatIxi extends IxiModule {
         // context.store(); TODO
         context.contacts.add(userid);
 
-        ixi.addGossipListener((GossipEvent event) -> {
-            if(gossipFilter.passes(event.getTransaction()))
-                addTransactionToQueue(event.getTransaction());
-        });
+        GossipListener listener = new GossipListener.Implementation() {
+            @Override
+            public void onReceive(GossipEvent event) {
+                if (gossipFilter.passes(event.getTransaction()))
+                    addTransactionToQueue(event.getTransaction());
+            }
+        };
+
+        ixi.addListener(listener);
     }
 
     @Override
     public void install() {
-        try {
-            if(!DIRECTORY.exists())
-                DIRECTORY.mkdirs();
-            if (!WEB_DIRECTORY.exists())
-                IOHelper.extractDirectoryFromJarFile(ChatIxi.class, "web/", WEB_DIRECTORY.getPath());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        if(startedFromJar())
+            try {
+                if(!DIRECTORY.exists())
+                    DIRECTORY.mkdirs();
+                if (!WEB_DIRECTORY.exists())
+                    IOHelper.extractDirectoryFromJarFile(ChatIxi.class, "web/", WEB_DIRECTORY.getPath());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+    }
+
+    private static boolean startedFromJar() {
+        String pathToChatIXI = ChatIxi.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        return pathToChatIXI.endsWith(".jar");
     }
 
     @Override
